@@ -5,7 +5,6 @@ var PeopleSchema = new mongoose.Schema({
     updatedAt: Date
 })
 
-
 PeopleSchema.belongsTo('User', {
     as: 'user',
     localField: 'userId'

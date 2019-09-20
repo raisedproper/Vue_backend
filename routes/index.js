@@ -18,22 +18,25 @@ router.get('/verifyEmail',function(req,res){
 router.get("/getuser/:id", async function(req, res) {
   const {id} = req.params
   
-  let user = await PeopleModel.findById(id).populateAssociation('user')
+  let user = await PeopleModel.findById(id).populateAssociation('friend')
   res.send(user)
   
 })
 
-router.post("/create", function(req, res) {
-  const {userId} = req.body
-  
-  UserModel.findById(userId).then(user => {
-   let people = new PeopleModel({
-     user: user
+router.post("/create",  function(req, res) {
+  const userId = req.body.userId
+  const  friendId = req.body.friendId
+ let user1 =  UserModel.findById(userId)
+ let user2 = UserModel.findById(friendId)
+ 
+   let people =  new PeopleModel({
+     user: user1,
+     friend: user2
    })
    people.save((res, err) => {
       console.log(res)
    })
-  })
+
   
 })
 
