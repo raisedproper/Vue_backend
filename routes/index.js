@@ -4,6 +4,8 @@ var PeopleModel = require("../models/People");
 var UserModel = require("../models/User");
 const jwt = require("jsonwebtoken");
 const config = require("../config");
+var surroundingListModel = require('../models/SurroundingList')
+
 // /const io = require('socket.io')(3001);
 
 /* GET home page. */
@@ -15,12 +17,45 @@ router.get('/',function(req,res){
 router.get('/verifyEmail',function(req,res){
   res.render('verificationResponse')
 })
+
+// create people list
+router.post("/peoplelist", function(req,res){
+UserModel.find({},function(err,resp){
+  if(resp){
+    console.log(resp)
+    for(i=0;i<resp.length;i++){
+  
+     if(resp[i].isVerified == 0){
+       let peopleuser = resp[i]
+       
+         let people = new surroundingListModel(peopleuser)
+         console.log('people',people)
+        people.save(function(err,resp){
+          if(resp){
+            console.log('people added',resp)
+          } else {
+            console.log('error while adding people',err)
+         }
+         })
+
+       }
+    }
+
+  }
+})
+
+PeopleModel.find({},function(err,resp){
+  if(resp){
+    res.status(200).json(resp);
+  }
+})
+})
+
 router.get("/getuser/:id", async function(req, res) {
   const {id} = req.params
   
   let user = await PeopleModel.findById(id).populateAssociation('friend')
   res.send(user)
-  
 })
 
 router.post("/create",  function(req, res) {
@@ -36,8 +71,6 @@ router.post("/create",  function(req, res) {
    people.save((res, err) => {
       console.log(res)
    })
-
-  
 })
 
 router.get("/getSurroundingPeople", function(req, res) {

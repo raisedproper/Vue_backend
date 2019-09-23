@@ -140,7 +140,8 @@ router.post("/register", function(req, res) {
 });
 
 router.post("/verifyEmail/token?", function(req, res) {
-  var filter = { token: req.body.token };
+  console.log(req.body)
+  var filter = { emailAddress: req.body.emailAddress };
   var update = { isVerified: 1, token: null, updatedAt: date };
 
   UserModel.findOneAndUpdate(filter, update, { new: true }, function(
