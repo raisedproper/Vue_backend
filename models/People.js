@@ -7,15 +7,15 @@ var PeopleSchema = new mongoose.Schema({
 })
 
 PeopleSchema.belongsTo('User', {
-    as: 'user',
-    localField: 'userId'
-  })
+  as: 'user',
+  localField: 'userId'
+})
 
 PeopleSchema.belongsTo('User', {
-    as: 'friend',
-    localField: 'friendId'
-  })
+  as: 'friend',
+  localField: 'friendId'
+})
 
-var PeopleModel = mongoose.model('People',PeopleSchema)
+var PeopleModel = mongoose.model('People', PeopleSchema)
 
 module.exports = PeopleModel

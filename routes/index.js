@@ -4,6 +4,8 @@ var PeopleModel = require("../models/People");
 var UserModel = require("../models/User");
 const jwt = require("jsonwebtoken");
 const config = require("../config");
+var surroundingListModel = require('../models/SurroundingList')
+
 // /const io = require('socket.io')(3001);
 
 /* GET home page. */
