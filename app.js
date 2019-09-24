@@ -9,6 +9,7 @@ mongooseAssociation(mongoose)
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var friendsRouter = require('./routes/friend');
 /* var chatRouter = require('./routes/chat') */
 
 mongoose.connect('mongodb://127.0.0.1:27017/mongodb', {useNewUrlParser: true});
@@ -28,6 +29,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/friends', friendsRouter);
 /* app.use('/chat',chatRouter) */
 
 // catch 404 and forward to error handler

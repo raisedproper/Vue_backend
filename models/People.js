@@ -1,6 +1,7 @@
 var mongoose = require('mongoose');
 
 var PeopleSchema = new mongoose.Schema({
+    status: String,
     createdAt: Date,
     updatedAt: Date
 })

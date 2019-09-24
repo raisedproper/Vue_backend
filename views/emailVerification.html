@@ -1,25 +1,35 @@
 <html>
-    <head>
-            <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-        </head>
-    <body>
-        <div style="display: block;text-align:center">
-        <div class="card" style="width: 40%; display: inline-block;text-align: center; margin: auto;">
-                <div class="card-body">
-            <h5>Hi {{name}}</h5>
-            <p>confirm your email address by clicking on the following link.</p>
-            <a href={{url}}>Confirm Email Address</a>
-            </div>
-            </div>
-           </div>
-           <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
-           <script>
-            var socket = io.connect(`http://localhost:3001/`);
-               socket.on("message", function(msg){
-                   console.log(msg)
-                   socket.emit('hello','welcome to vue')
-               });
-              
-               </script>
-        </body>
-    </html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div style="display: block;text-align:center">
+      <div
+        class="card"
+        style="width: 40%; display: inline-block;text-align: center; margin: auto;"
+      >
+        <div class="card-body">
+          <h5>Hi {{ name }}</h5>
+          <p>confirm your email address by clicking on the following link.</p>
+          <a href="{{ url }}" onclick="verifyEmailAddress(url)"
+            >Confirm Email Address</a
+          >
+        </div>
+      </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+    <script>
+      var socket = io.connect(`http://localhost:3001/`);
+      socket.on("message", function(msg) {
+        console.log(msg);
+        socket.emit("hello", "welcome to vue");
+      });
+
+    </script>
+  </body>
+</html>

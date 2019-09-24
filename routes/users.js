@@ -28,37 +28,46 @@ var upload = multer({ storage: storage });
 /* GET users listing. */
 router.post("/login", function(req, res, next) {
   let { emailAddress, password } = req.body;
-
+  console.log(emailAddress, password);
   UserModel.find({ emailAddress: emailAddress }, function(err, user) {
-    if (user[0].isVerified == 1) {
-      if (user.length == 1 && user[0].emailAddress == emailAddress) {
-        console.log("user found", user);
+    if (user.length == 1 && user[0].emailAddress == emailAddress) {
 
-        let checkpassword = user[0].password;
+      let checkpassword = user[0].password;
 
-        let result = bcrypt.compareSync(password, checkpassword);
-        if (result == true) {
-          const secret = config.loginSecret;
-          var token = jwt.sign({ result: emailAddress }, secret);
-          const response = {
-            authorization: "loggedIn",
-            token: token,
-            user: user
-          };
-          res.status(200).json(response);
-        } else {
-          res.json("password is invalid");
-        }
-      } else if (user.length == 0) {
-        console.log("user doesnot exist");
-        res.json("user doesnot exist");
+      let result = bcrypt.compareSync(password, checkpassword);
+      if (result == true) {
+        const secret = config.loginSecret;
+        var token = jwt.sign({ result: emailAddress }, secret);
+        console.log("user", user);
+        user.token = token;
+
+        var response = {
+          status: 200,
+          message: "login successfully",
+          token: user.token,
+          emailAddress: user.emailAddress
+        };
+        res.json(response);
       } else {
-        console.log("error while finding user", err);
-        res.status(400).json(err);
+        res.json({ 
+          status: 200,
+          message: "password is invalid"
+        });
       }
-    } else if (user[0].isVerified == 0) {
-      res.json("email address is not verified");
+    } else if (user.length == 0) {
+      console.log("user doesnot exist");
+      res.json({ 
+        status: 200,
+        message: "user doesnot exist"
+      });
+    } else {
+      console.log("error while finding user", err);
+      res.json({ 
+        status: 400,
+        message: "user not saved"
+      });
     }
+
   });
 });
 
@@ -70,16 +79,20 @@ router.post("/register", function(req, res) {
   UserModel.find({ emailAddress: emailAddress }, function(err, result) {
     if (result.length >= 1) {
       console.log("users already exists", result[0].emailAddress);
-      res.json("user already exists");
+      res.json({ 
+        status: 200,
+        message: "users already exists"
+      });
     } else if (result.length == 0) {
       const secret = config.registerSecret;
-      var token = jwt.sign({ result: emailAddress }, secret);
+      var token = jwt.sign({ result: emailAddress }, secret, {
+        expiresIn: "12h"
+      });
       var User = new UserModel({
         firstName: firstName,
         lastName: lastName,
         emailAddress: emailAddress,
         password: hash,
-        isVerified: 0,
         token: token,
         createdAt: date,
         updatedAt: date
@@ -88,7 +101,10 @@ router.post("/register", function(req, res) {
       User.save(function(err, resp) {
         if (err) {
           console.log("error while saving User", err);
-          res.status(400).json(err);
+          res.json({ 
+            status: 400,
+            message: "user not saved"
+          });
         } else {
           console.log("User saved successfully");
 
@@ -129,30 +145,20 @@ router.post("/register", function(req, res) {
               console.log("Message sent: " + info.message);
             }
           });
-          res.status(200).json(resp);
+          res.json({
+            status: 200,
+            message: "user registered successfully",
+            token: resp.token,
+            emailAddress: resp.emailAddress
+          })
         }
       });
     } else {
       console.log("error while finding users", err);
-      res.status(400).json(err);
-    }
-  });
-});
-
-router.post("/verifyEmail/token?", function(req, res) {
-  var filter = { token: req.body.token };
-  var update = { isVerified: 1, token: null, updatedAt: date };
-
-  UserModel.findOneAndUpdate(filter, update, { new: true }, function(
-    err,
-    resp
-  ) {
-    if (resp) {
-      console.log("user updated", resp);
-      res.status(200).json(resp);
-    } else if (err) {
-      res.status(400).json(err);
-      throw err;
+      res.json({
+        status: 400,
+        message: "user not saved",
+      })
     }
   });
 });
@@ -170,7 +176,14 @@ router.post("/createprofile", upload.single("profilePicture"), function(
       .status(401)
       .send({ authorization: false, message: "No token provided." });
   }
-  var { age, location, profession, phoneNumber, emailAddress,gender } = req.body;
+  var {
+    age,
+    location,
+    profession,
+    phoneNumber,
+    emailAddress,
+    gender
+  } = req.body;
   if (!profilePicture) {
     console.log("profile picture is not uploaded");
   } else {
@@ -194,42 +207,61 @@ router.post("/createprofile", upload.single("profilePicture"), function(
     updatedAt: date
   };
 
-  jwt.verify(token, config.loginSecret, function(err, decoded) {
-    if (err) {
+  /*   jwt.verify(token, config.loginSecret, function(err, decoded) { */
+  /*  if (err) {
       return res.status(500).send({
         authorization: false,
         message: "Failed to authenticate token."
       });
-    } else {
-      UserModel.findOne({ emailAddress: emailAddress }, function(err, resp) {
-        if (resp) {
-          if (typeof resp.profile.emailAddress == "undefined") {
-            console.log("user found", resp);
-            let update = { user: resp, profile };
-            console.log("update", update);
+    } else { */
+  UserModel.findOne({ emailAddress: emailAddress }, function(err, resp) {
+    if (resp) {
+      if (typeof resp.profile.emailAddress == "undefined") {
+        console.log("user found", resp);
+        let update = { user: resp, profile };
+        console.log("update", update);
 
-            UserModel.update(resp, update, function(err, resp) {
-              if (resp) {
-                console.log("user updated", resp);
-                res.status(200).json(resp);
-              } else {
-                console.log("user not updated", err);
-                res.json("user not updated");
-              }
-            });
-          } else if (resp.profile.emailAddress == emailAddress) {
-            res.json("profile with this user already exists");
+        UserModel.update(resp, update, function(err, resp) {
+          if (resp) {
+            console.log("profile created successfully", resp);
+            res.json({
+              status: 200,
+              message: "profile created successfully",
+            })
+          } else {
+            console.log("user not updated", err);
+            res.json({
+              status: 400,
+              message: "profile not created",
+              emailAddress: resp.emailAddress,
+            })
           }
-        } else if (err) {
-          console.log("error while finding user", err);
-          res.status(400).json(err);
-        } else if (!resp) {
-          console.log("no such user exists");
-          res.json("no such user exists");
-        }
-      });
+        });
+      } else if (resp.profile.emailAddress == emailAddress) {
+        res.json({
+          status: 200,
+          message: "profile with this user already exists",
+          emailAddress: resp.emailAddress,
+        })
+      }
+    } else if (err) {
+      console.log("error while finding user", err);
+      res.json({
+        status: 400,
+        message: "user couldn't be found",
+        emailAddress: resp.emailAddress,
+      })
+    } else if (!resp) {
+      console.log("no such user exists");
+      res.json({
+        status: 200,
+        message: "no such user exists",
+        emailAddress: resp.emailAddress,
+      })
     }
   });
+  /* } */
+  /*  }); */
 });
 
 let ids = [];
@@ -242,63 +274,68 @@ router.post("/addProfileLink", function(req, res) {
       .status(401)
       .send({ authorization: false, message: "No token provided." });
   }
-  jwt.verify(token, config.loginSecret, function(err, decoded) {
-    if (err) {
-      return res.status(500).send({
-        authorization: false,
-        message: "Failed to authenticate token."
-      });
-    } else {
-      UserModel.findOne({ emailAddress: emailAddress }, function(err, resp) {
-        if (resp) {
-          socialMediaAccount = resp.profile.socialMediaAccount;
-          if (!ids.includes(req.body.id) && req.body.id != null) {
-            let socialAccountObj = {
-              id: req.body.id,
-              link: req.body.link,
-              linked: true
-            };
-            socialMediaAccount.push(socialAccountObj);
+
+  UserModel.findOne({ emailAddress: emailAddress }, function(err, resp) {
+    if (resp) {
+      socialMediaAccount = resp.profile.socialMediaAccount;
+      if (!ids.includes(req.body.id) && req.body.id != null) {
+        let socialAccountObj = {
+          id: req.body.id,
+          link: req.body.link,
+          linked: true
+        };
+        socialMediaAccount.push(socialAccountObj);
+      }
+      resp.profile.updatedAt = date;
+
+      resp.profile.publicAccount = req.body.publicAccount;
+
+      var profileDetails = {
+        firstName: resp.firstName,
+        lastName: resp.lastName,
+        emailAddress: resp.emailAddress,
+        location: resp.profile.location,
+        profession: resp.profile.profession,
+        age: resp.profile.age,
+        profilePicture: resp.profile.profilePicture.data,
+        publicAccount: resp.profile.publicAccount
+      };
+      console.log("profileDetails", profileDetails);
+      let newProfile = {
+        ...resp.profile,
+        socialMediaAccount: socialMediaAccount
+      };
+
+      UserModel.updateOne(
+        { emailAddress: emailAddress },
+        { $set: { updatedAt: date, profile: newProfile } },
+        function(err, resp) {
+          if (resp) {
+            console.log("user updated", resp);
+            ids.push(req.body.id);
+            res.json({
+              status: 200,
+              message: "profile link added successfully",
+              socialMediaAccount: {...socialMediaAccount},
+            })
+        
+          } else {
+            console.log("error while updating user", err);
+            res.json({
+              status: 400,
+              message: "profile link not added ",
+              socialMediaAccount: {...socialMediaAccount},
+            })
           }
-          resp.profile.updatedAt = date;
-
-          resp.profile.publicAccount = req.body.publicAccount;
-
-          var profileDetails = {
-            firstName: resp.firstName,
-            lastName: resp.lastName,
-            emailAddress: resp.emailAddress,
-            location: resp.profile.location,
-            profession: resp.profile.profession,
-            age: resp.profile.age,
-            profilePicture: resp.profile.profilePicture.data,
-            publicAccount: resp.profile.publicAccount
-          };
-          console.log("profileDetails", profileDetails);
-          let newProfile = {
-            ...resp.profile,
-            socialMediaAccount: socialMediaAccount
-          };
-
-          UserModel.updateOne(
-            { emailAddress: emailAddress },
-            { $set: { updatedAt: date, profile: newProfile } },
-            function(err, resp) {
-              if (resp) {
-                console.log("user updated", resp);
-                ids.push(req.body.id);
-                res.send({ ...profileDetails, ...socialMediaAccount });
-              } else {
-                console.log("error while updating user", err);
-                res.status(400).json(err);
-              }
-            }
-          );
-        } else {
-          res.json("error while getting profile", err);
-          res.status(400).json(err);
         }
-      });
+      );
+    } else {
+      console.log("error while getting profile", err);
+      res.json({
+        status: 400,
+        message: "profile link not added ",
+        socialMediaAccount: {...socialMediaAccount},
+      })
     }
   });
 });
@@ -311,22 +348,21 @@ router.post("/viewProfile", function(req, res) {
       .status(401)
       .send({ authorization: false, message: "No token provided." });
   }
-  jwt.verify(token, config.loginSecret, function(err, decoded) {
-    if (err) {
-      return res.status(500).send({
-        authorization: false,
-        message: "Failed to authenticate token."
-      });
+
+  UserModel.findOne({ emailAddress: emailAddress }, function(err, resp) {
+    if (resp) {
+      console.log("user found", resp);
+      res.json({
+        status: 200,
+        message: "profile fetched successfully",
+        profileDetails: resp.profile 
+      })
     } else {
-      UserModel.findOne({ emailAddress: emailAddress }, function(err, resp) {
-        if (resp) {
-          console.log("user found", resp);
-          res.status(200).json(resp);
-        } else {
-          console.log("error while finding user", err);
-          res.status(400).json(err);
-        }
-      });
+      console.log("error while finding user", err);
+      res.json({
+        status: 400,
+        message: "profile couldn't be fetched",
+      })
     }
   });
 });
