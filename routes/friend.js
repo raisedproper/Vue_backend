@@ -2,10 +2,10 @@ var express = require("express");
 var router = express.Router();
 var PeopleModel = require("../models/People");
 var UserModel = require("../models/User");
-const jwt = require("jsonwebtoken");
-const config = require("../config");
+var routeAuthentication = require("../middleware/authentication");
 
 var date = new Date();
+router.use(routeAuthentication);
 // router.get('/', function(req, res) {
 
 // })
@@ -17,12 +17,6 @@ var date = new Date();
 router.post("/createFriend", async function(req, res) {
   const userId = req.body.userId;
   const friendId = req.body.friendId;
-  var token = req.headers["token"];
-  if (!token) {
-    return res
-      .status(401)
-      .send({ authorization: false, message: "No token provided." });
-  }
 
   let user1 = await UserModel.findById(userId);
   console.log("user1", user1.id);
@@ -37,7 +31,7 @@ router.post("/createFriend", async function(req, res) {
       if (people.length != 0) {
         console.log("response", people);
         res.json({
-          status: 200,
+          status: 202,
           message: "friend request already sent to this persion"
         });
       } else if (people.length == 0) {
@@ -80,17 +74,9 @@ router.post("/createFriend", async function(req, res) {
 router.put("/acceptfriend", function(req, res) {
   const friendId = req.body.friendId;
   const userId = req.body.userId;
-  console.log(friendId, userId);
+
   let filter = { userId: userId };
   let update = { status: "approved" };
-
-  /*   var token = req.headers["token"]; 
-
-   if (!token) {
-    return res
-      .status(401)
-      .send({ authorization: false, message: "No token provided." });
-  }  */
 
   PeopleModel.findOne({ userId: userId, friendId: friendId }, function(
     err,
@@ -98,31 +84,31 @@ router.put("/acceptfriend", function(req, res) {
   ) {
     if (response) {
       console.log("user found", response);
-      if(response.status != 'approved'){
-      PeopleModel.updateOne(filter, { $set: update }, function(err, update) {
-        if (update) {
-          console.log("friend request accepted", response);
-          res.json({
-            status: 200,
-            message: "friend request accepted"
-          });
-        } else if (err) {
-          res.json({
-            status: 400,
-            message: "error while accepting friend request"
-          });
-        }
-      });
-    } else if(response.status == 'approved'){
-      res.json({
-        status: 200,
-        message: "Already added as friend"
-      });
-    }
+      if (response.status != "approved") {
+        PeopleModel.updateOne(filter, { $set: update }, function(err, update) {
+          if (update) {
+            console.log("friend request accepted", response);
+            res.json({
+              status: 200,
+              message: "friend request accepted"
+            });
+          } else if (err) {
+            res.json({
+              status: 400,
+              message: "error while accepting friend request"
+            });
+          }
+        });
+      } else if (response.status == "approved") {
+        res.json({
+          status: 202,
+          message: "Already added as friend"
+        });
+      }
     } else if (!response) {
       console.log("no user found", response);
       res.json({
-        status: 200,
+        status: 203,
         message: "Kindly send friend request to approve"
       });
     } else if (err) {
@@ -135,8 +121,24 @@ router.put("/acceptfriend", function(req, res) {
   });
 });
 
-// router.delete('/:id', function(req, res) {
+router.delete("/removeFriend/:id", function(req, res) {
+  const friendId = req.params.id;
 
-// })
+  PeopleModel.findOneAndRemove({friendId: friendId}, function(err, response) {
+    if (response) {
+      console.log("friend connections removed");
+      res.json({
+        status: 200,
+        message: "friend connection removed"
+      })
+    } else if (err) {
+      console.log("error while removing friend", err);
+      res.json({
+        status: 400,
+        message: "error while removing friend connection"
+      })
+    }
+  });
+});
 
 module.exports = router;

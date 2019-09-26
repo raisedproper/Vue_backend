@@ -4,14 +4,13 @@ var PeopleModel = require("../models/People");
 var UserModel = require("../models/User");
 const jwt = require("jsonwebtoken");
 const config = require("../config");
-var surroundingListModel = require('../models/SurroundingList')
 
 // /const io = require('socket.io')(3001);
 
 /* GET home page. */
 
 router.get("/", function(req, res) {
-  res.render("emailVerification");
+  res.render("index.jade");
 });
 
 router.get("/verifyEmail", function(req, res) {
@@ -82,33 +81,6 @@ router.post("/refineSearchPeople", function(req, res) {
     } else if (err) {
       console.log("error getting all users", err);
       res.status(400).json(err);
-    }
-  });
-});
-
-router.post("/messages", function(req, res) {
-  var token = req.headers["token"];
-  if (!token) {
-    return res
-      .status(401)
-      .send({ authorization: false, message: "No token provided." });
-  }
-
-  jwt.verify(token, config.loginSecret, function(err, decoded) {
-    if (err) {
-      return res.status(500).send({
-        authorization: false,
-        message: "Failed to authenticate token."
-      });
-    } else {
-      io.on("connection", socket => {
-        console.log("connection established");
-        res.status(200).json("connection established");
-        io.emit("message", "hello world");
-        socket.on("hello", function(msg) {
-          console.log(msg);
-        });
-      });
     }
   });
 });

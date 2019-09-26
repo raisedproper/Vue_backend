@@ -16,7 +16,6 @@ var userSchema = new mongoose.Schema({
     phoneNumber: Number,
     emailAddress: String,
     profession: String,
-    profilePicture: {data: Buffer,contentType: String},
     profilePicturePath: String,
     gender: String,
     socialMediaAccount: Array,
