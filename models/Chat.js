@@ -1,16 +1,14 @@
 var mongoose = require('mongoose');
 
 var ChatSchema = new mongoose.Schema({
-    message: {
         messageBody: String,
-        messageId: Number,
-        ConversationId: Number,
-        senderId: Number,
-        isRead: Boolean,
+        ConversationId: String,
+        senderId: String,
+        recieverId: String,
         createdAt: Date,
         updatedAt: Date
-    }
 })
-var ChatModel = mongoose.model('chat',ChatSchema)
+
+var ChatModel = mongoose.model('Chat',ChatSchema)
 
 module.exports = ChatModel

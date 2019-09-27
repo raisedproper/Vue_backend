@@ -6,7 +6,6 @@ var userSchema = new mongoose.Schema({
         firstName: String,
         lastName: String,
         token: String,
-      /*   isVerified: Number, */
         createdAt: Date,
         updatedAt: Date,
 

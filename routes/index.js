@@ -5,12 +5,10 @@ var UserModel = require("../models/User");
 const jwt = require("jsonwebtoken");
 const config = require("../config");
 
-// /const io = require('socket.io')(3001);
-
 /* GET home page. */
 
 router.get("/", function(req, res) {
-  res.render("index.jade");
+  res.render("index");
 });
 
 router.get("/verifyEmail", function(req, res) {

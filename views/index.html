@@ -1,0 +1,15 @@
+<html>
+  <head> </head>
+  <body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+    <script>
+      const socket = io("http://localhost:3001");
+      socket.emit("connection", "hello connection");
+      socket.emit("send_message",{senderId: '5d8b6790863ee83f85cb7800',
+      recieverId: '5d8c9142019eb6311271c225', message:'yoyoyo'})
+      socket.on('send_message', function(msg){
+        console.log(msg)
+      });
+    </script>
+  </body>
+</html>
