@@ -2,9 +2,10 @@ var mongoose = require('mongoose');
 
 var ChatSchema = new mongoose.Schema({
         messageBody: String,
-        ConversationId: String,
+        conversationId: String,
         senderId: String,
         recieverId: String,
+        readMessage: Boolean,
         createdAt: Date,
         updatedAt: Date
 })

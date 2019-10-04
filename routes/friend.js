@@ -6,24 +6,20 @@ var routeAuthentication = require("../middleware/authentication");
 
 var date = new Date();
 router.use(routeAuthentication);
-// router.get('/', function(req, res) {
-
-// })
-
-// router.get('/:id', function(req, res) {
-
-// })
 
 router.post("/createFriend", async function(req, res) {
+  var token = req.headers["token"];
   const userId = req.body.userId;
   const friendId = req.body.friendId;
 
   let user1 = await UserModel.findById(userId);
-  console.log("user1", user1.id);
+  console.log("user1", user1);
   let user2 = await UserModel.findById(friendId);
-  console.log("user2", user2.id);
+  console.log("user2", user2);
 
-  if (user1.id || user2.id) {
+  if(user1 && user2){
+    console.log("user1", user1.id);
+    console.log("user2", user2.id);
     PeopleModel.find({ userId: user1.id, friendId: user2.id }, function(
       err,
       people
@@ -68,6 +64,12 @@ router.post("/createFriend", async function(req, res) {
         });
       }
     });
+  } else {
+    console.log("These users doesn't exist");
+        res.json({
+          status: 404,
+          message: "These users doesn't exist"
+        });
   }
 });
 

@@ -9,11 +9,14 @@ var date = new Date();
 
 io.on("connection", function(socket) {
   socket.on("send_message", async function(msg) {
-    console.log("ss");
     var conversationId;
     let existingConversation = await ConversationModel.findOne({
-      senderId: msg.senderId,
-      recieverId: msg.recieverId
+      $or:[
+      {senderId: msg.senderId,
+      recieverId: msg.recieverId },
+      {senderId: msg.recieverId,
+      recieverId: msg.senderId}
+      ]
     });
 
     if (existingConversation) {
@@ -38,10 +41,12 @@ io.on("connection", function(socket) {
     }
     let createMessageObj = {
         messageBody: msg.message,
-        ConversationId: conversationId,
+        conversationId: conversationId,
+        readMessage: false,
         senderId: msg.senderId,
         recieverId: msg.recieverId
       };
+
       let newMessage = await createMessage(createMessageObj);
       if (newMessage) {
           io.emit('send_message',newMessage)
@@ -53,13 +58,14 @@ io.on("connection", function(socket) {
 async function createMessage(obj) {
   var message = new ChatModel({
     messageBody: obj.messageBody,
-    ConversationId: obj.conversationId,
+    conversationId: obj.conversationId,
     senderId: obj.senderId,
     recieverId: obj.recieverId,
+    readMessage: obj.readMessage,
     createdAt: date,
     updatedAt: date
   });
-console.log('message to be saved',message)
+
   let saveMessage = await message.save();
   if (saveMessage) {
     console.log("Message saved", saveMessage);

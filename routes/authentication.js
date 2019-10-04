@@ -18,9 +18,7 @@ router.post("/login", function(req, res, next) {
       if (result == true) {
         console.log(user[0].token);
 
-        var token = jwt.sign({emailAddress: emailAddress}, config.Secret).then(resp => {
-          return resp;
-        });
+        var token = jwt.sign({emailAddress: emailAddress}, config.Secret)
         console.log("new token", token);
         UserModel.updateOne(
           { emailAddress: emailAddress },

@@ -8,7 +8,7 @@ const ngrok = require('ngrok');
 const { mongooseAssociation } = require('mongoose-association')
 mongooseAssociation(mongoose)
 
-var indexRouter = require('./routes/index');
+var peopleRouter = require('./routes/people');
 var authenticationRouter = require('./routes/authentication');
 var friendsRouter = require('./routes/friend');
 var profileRouter = require('./routes/profile');
@@ -29,9 +29,9 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public/images')));
 
-app.use('/', indexRouter);
+app.use('/people', peopleRouter);
 app.use('/authentication', authenticationRouter);
 app.use('/friends', friendsRouter);
 app.use('/profile', profileRouter);

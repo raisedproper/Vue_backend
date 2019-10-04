@@ -1,15 +1,165 @@
 var express = require("express");
 var router = express.Router();
-var ChatModel = require("../models/Chat");
-const jwt = require("jsonwebtoken");
-const config = require("../config");
+var PeopleModel = require("../models/People");
+var UserModel = require("../models/User");
+var routeAuthentication = require("../middleware/authentication");
+/* GET home page. */
+router.use(routeAuthentication);
+var date = new Date();
+var moment = require('moment');
 
-router.post('/sendMessage',function(req,res){
-  var {senderId, recieverId,message,isRead} = req.body;
-
-let messageObject = {
-    
+async function findUser(postdata) {
+  let response = await UserModel.find(postdata);
+  if (response) {
+    let obj = {
+      status: 200,
+      response: response
+    };
+    return obj;
+  } else if (!response) {
+    let obj = {
+      status: 400
+    };
+    return obj;
+  } else if (err) {
+    let obj = { status: 404, response: err };
+    return obj;
+  }
 }
 
-  ChatModel.save()
-})
+var kmToRadian = function(km){
+  var earthRadiusInkm = 6371;
+  return km / earthRadiusInkm;
+};
+
+router.put("/sendLocation", async function(req, res) {
+  var token = req.headers["token"];
+  var { location } = req.body;
+  console.log("location", location);
+
+  let updatedUser = await UserModel.findOneAndUpdate(
+    { token: token },
+    { $set: { location: location, updatedAt: date } },
+    { new: true }
+  );
+  console.log(updatedUser);
+  if (updatedUser) {
+    res.json({
+      status: 200,
+      message: "location of user updated",
+      response: updatedUser.location
+    });
+  } else {
+    res.json({
+      status: 400,
+      message: "location of user not updated"
+    });
+  }
+});
+
+router.post("/getSurroundingPeople", function(req, res) {
+  var token = req.headers["token"];
+  UserModel.createIndexes()
+ 
+var {currentlocation,radius,startTime,endTime} = req.body
+console.log('start',startTime)
+console.log('end',endTime)
+/* startTime = moment(startTime).format('LT') */
+console.log('startTime',startTime)
+/* endTime = moment(endTime).format('LT') */
+console.log('endTime',endTime)
+  UserModel.find(
+    {
+      "location": {
+        $geoWithin: {
+          $centerSphere: [currentlocation, kmToRadian(radius)]
+        }
+      },  
+      token: { $not: { $eq: token } },
+      "updatedAt": {$gte: startTime, $lt: endTime} 
+    },
+    function(err, response) {
+      if (response) {
+        console.log("get all users");
+        let modified_response = [];
+        response.map(obj => {
+          let time =  moment(obj.updatedAt).format('LT')
+          console.log('time',time)
+
+          let new_obj = {
+            firstName: obj.firstName,
+            lastName: obj.lastName,
+            location: obj.location,
+            id: obj._id,
+            emailAddress: obj.emailAddress,
+            publicAccount: obj.profile.publicAccount,
+            profilePicture: obj.profile.profilePicturePath,
+            gender: obj.profile.gender,
+            time: time
+          };
+          if (obj.profile.emailAddress) {
+            modified_response.push(new_obj);
+          }
+        });
+        return res.json({
+          status: 200,
+          message: "people list fetched successfully",
+          response: modified_response
+        });
+      } else if (err) {
+        console.log("error getting all users", err);
+        return res.json({
+          status: 400,
+          message: "error getting people list"
+        });
+      }
+    }
+  );
+});
+
+router.post("/refineSearchPeople", function(req, res) {
+  var token = req.headers["token"];
+  var {
+    ageFilter,
+    genderFilter,
+    timeFilter,
+    firstNameFilter,
+    lastNameFilter
+  } = req.body;
+  console.log("fsgfs", ageFilter);
+  console.log("sfsd", ageFilter.split("-")[0]);
+
+  UserModel.find(
+    {
+      "profile.age": {
+        $gte: ageFilter.split("-")[0],
+        $lt: ageFilter.split("-")[1]
+      },
+      "profile.gender": genderFilter,
+      "profile.time": {
+        $gte: timeFilter.split("-")[0],
+        $lt: timeFilter.split("-")[1]
+      },
+      firstName: firstNameFilter,
+      lastName: lastNameFilter
+    },
+    function(err, response) {
+      if (response) {
+        console.log("get users", response);
+        res.json({
+          status: 200,
+          message: "users fetched successfully",
+          response: response
+        });
+      } else if (err) {
+        console.log("error getting all users", err);
+        res.json({
+          status: 400,
+          message: "error getting all users"
+        });
+      }
+    }
+  );
+});
+
+module.exports = router;

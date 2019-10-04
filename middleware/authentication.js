@@ -7,7 +7,7 @@ var routeAuthentication = function(req,res,next){
           .status(401)
           .send({ authorization: false, message: "No token provided." });
       }
-console.log('inside',token)
+
     UserModel.findOne({token: token}, function(err,resp){
         if(resp){
             console.log('found',resp.emailAddress)

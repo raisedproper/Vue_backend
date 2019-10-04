@@ -11,21 +11,32 @@ var userSchema = new mongoose.Schema({
 
  profile: {
     age: Number,
-    location: String,
     phoneNumber: Number,
     emailAddress: String,
     profession: String,
     profilePicturePath: String,
     gender: String,
-    socialMediaAccount: Array,
+    socialMediaAccount: Object,
     publicAccount: Boolean,
     createdAt: Date,
     updatedAt: Date
-}
+},
+
+location: {
+    coordinates: {
+        type: [Number],  
+  index: { type: '2dsphere', sparse: false },
+      },
+    type: {
+        type: String,
+        enum: ['Point']
+    }
+},
 })
 
-userSchema.hasMany('People')
 
+userSchema.hasMany('People')
+ userSchema.index({location: '2dsphere'});
 var UserModel = mongoose.model('User',userSchema);
 
 module.exports = UserModel

@@ -2,274 +2,390 @@ var express = require("express");
 var router = express.Router();
 var UserModel = require("../models/User");
 var multer = require("multer");
-var path = require('path')
-var routeAuthentication = require('../middleware/authentication');
+var path = require("path");
+var routeAuthentication = require("../middleware/authentication");
 
 var socialMediaAccount = [];
 var ids = [];
 
 var storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, "public/images");
-    },
-    filename: (req, file, cb) => {
-      cb(null, file.fieldname + "-" + Date.now() + path.extname(file.originalname));
+  destination: (req, file, cb) => {
+    cb(null, "public/images");
+  },
+  filename: (req, file, cb) => {
+    cb(
+      null,
+      file.fieldname + "-" + Date.now() + path.extname(file.originalname)
+    );
+  }
+});
+var date = new Date();
+
+var upload = multer({ storage: storage });
+
+router.use(routeAuthentication);
+
+var socialMediaAccount = {
+  facebook: {
+    link: "",
+    linked: false
+  },
+  gmail: {
+    link: "",
+    linked: false
+  },
+  instagram: {
+    link: "",
+    linked: false
+  },
+  youtube: {
+    link: "",
+    linked: false
+  },
+  snapchat: {
+    link: "",
+    linked: false
+  },
+  website: {
+    link: "",
+    linked: false
+  },
+  linkedIn: {
+    link: "",
+    linked: false
+  },
+  twitter: {
+    link: "",
+    linked: false
+  }
+}
+
+function findUser(emailAddress){
+  UserModel.find({emailAddress: emailAddress}, function(err,resp){
+    if(resp){
+      let obj = {
+        status: 200,
+        message: 'user found',
+        response: resp
+      }
+      return obj
+    } else if (!resp){
+      let obj = {
+        status: 400,
+        message: 'user not found',
+      }
+      return obj
+    } else if(err){
+      let obj = {
+        status: 404,
+        message: 'error finding user',
+      }
+      return obj
     }
-  });
-  var date = new Date();
-  
-  var upload = multer({ storage: storage });
+  })
+}
 
-  router.use(routeAuthentication)
+router.post("/imageUpload", upload.single("profilePicture"), async function(
+  req,
+  res
+) {
+  var token = req.headers["token"];
+  console.log('req.file 6768699',req.file)
+  var profilePicture = req.file ? req.file.filename : "";
 
-router.post("/createprofile", upload.single("profilePicture"), function(
-    req,
-    res
-  ) {
-    var profilePicture = req.file;
-  
-    var {
-      age,
-      location,
-      profession,
-      phoneNumber,
-      emailAddress,
-      gender
-    } = req.body;
-    if (!profilePicture) {
-      console.log("profile picture is not uploaded");
-    } 
-  
-    let profile = {
-      emailAddress: emailAddress,
-      phoneNumber: phoneNumber,
-      age: age,
-      gender: gender,
-      location: location,
-      profession: profession,
-      profilePicturePath: req.file.path,
-      createdAt: date,
-      updatedAt: date
-    };
-  
-    UserModel.findOne({ emailAddress: emailAddress }, function(err, resp) {
-      console.log('here',resp)
-      if (resp) {
-        if (typeof resp.profile.emailAddress == "undefined") {
-          console.log("user found", resp);
-          let update = { user: resp, profile };
-          console.log("update", update);
-  
-          UserModel.update(resp, update, function(err, response) {
-            if (response) {
-              console.log("profile created successfully", response);
-             return res.json({
-                status: 200,
-                message: "Profile created successfully",
-                response: profile
-              });
-            } else {
-              console.log("user not updated", err);
-             return res.json({
-                status: 400,
-                message: "Profile not created",
-                emailAddress: resp.emailAddress
-              });
-            }
-          });
-        } else if (resp.profile.emailAddress == emailAddress) {
-         return res.json({
-            status: 202,
-            message: "Profile with this user already exists",
-            emailAddress: resp.emailAddress
-          });
-        }
-      } else if (err) {
-        console.log("error while finding user", err);
-       return res.json({
-          status: 400,
-          message: "User couldn't be found",
+  if (!profilePicture) {
+    console.log("profile picture is not uploaded");
+  }
+
+  let resp = await UserModel.findOneAndUpdate(
+    { token: token },
+    {
+      $set: {
+        "profile.profilePicturePath": profilePicture,
+        "profile.updatedAt": date
+      }
+    },
+    { new: true }
+  );
+  if (resp) {
+    console.log("image uploaded successfully", resp.profile);
+    return res.json({
+      status: 200,
+      message: "image uploaded successfully",
+      response: {profilePicturePath: resp.profile.profilePicturePath}
+    });
+  } else if (err) {
+    console.log("error while uploading image");
+    return res.json({
+      status: 404,
+      message: "error while uploading image"
+    });
+  } else if (!resp) {
+    console.log("This email Address doesn't exists");
+    return res.json({
+      status: 400,
+      message: "This email Address doesn't exists"
+    });
+  }
+});
+
+router.post("/createprofile", function(req, res) {
+  var {
+    age,
+    profession,
+    phoneNumber,
+    emailAddress,
+    gender
+  } = req.body;
+
+ socialMediaAccount["gmail"].link = emailAddress
+ socialMediaAccount["gmail"].linked = true
+
+  UserModel.findOne({ emailAddress: emailAddress }, function(err, resp) {
+    if (resp) {
+      if (typeof resp.profile.emailAddress == "undefined") {
+        let profile = {
+          id: resp.id,
+          emailAddress: emailAddress,
+          phoneNumber: phoneNumber,
+          age: age,
+          gender: gender,
+          profession: profession,
+          socialMediaAccount: socialMediaAccount,
+          profilePicturePath: resp.profile.profilePicturePath
+            ? resp.profile.profilePicturePath
+            : "",
+          publicAccount: true,
+          createdAt: date,
+          updatedAt: date
+        };
+        let update = { user: resp, profile };
+
+        UserModel.update({ emailAddress: emailAddress }, update, function(
+          err,
+          response
+        ) {
+          if (response) {
+            console.log("profile created successfully", response);
+            return res.json({
+              status: 200,
+              message: "Profile created successfully",
+              response: profile
+            });
+          } else {
+            console.log("user not updated", err);
+            return res.json({
+              status: 400,
+              message: "Profile not created",
+              emailAddress: resp.emailAddress
+            });
+          }
+        });
+      } else if (resp.profile.emailAddress == emailAddress) {
+        return res.json({
+          status: 202,
+          message: "Profile with this user already exists",
           emailAddress: resp.emailAddress
         });
-      } else if (!resp) {
-        console.log("This email Address doesn't exists");
-       return res.json({
+      }
+    } else if (err) {
+      console.log("error while finding user", err);
+      return res.json({
+        status: 400,
+        message: "User couldn't be found",
+        emailAddress: resp.emailAddress
+      });
+    } else if (!resp) {
+      console.log("This email Address doesn't exists");
+      return res.json({
+        status: 400,
+        authorization: false,
+        message: "This email Address doesn't exists"
+      });
+    }
+  });
+});
+
+router.post("/addProfileLink", async function(req, res) {
+  let emailAddress = req.body.emailAddress;
+  var profileLink = req.body.profileLink;
+  console.log("profile", profileLink);
+  let user = await UserModel.findOne({ emailAddress: emailAddress });
+  try {
+    if (user.profile.emailAddress) {
+      console.log(user.profile.socialMediaAccount)
+      console.log(profileLink.link)
+      user.profile.socialMediaAccount[profileLink.id].link = profileLink.link
+      user.profile.socialMediaAccount[profileLink.id].linked = profileLink.linked
+
+      user.profile.updatedAt = date;
+
+      let newProfile = {
+        ...user.profile,
+        socialMediaAccount: {...user.profile.socialMediaAccount}
+      };
+      console.log("newproile", newProfile);
+
+      let updatedUser = await UserModel.updateOne(
+        { emailAddress: emailAddress },
+        { $set: { updatedAt: date, profile: newProfile } },
+        { new: true }
+      );
+
+      if (updatedUser) {
+        console.log("user updated", updatedUser);
+        return res.json({
+          status: 200,
+          message: "Profile link added successfully",
+          response: newProfile
+        });
+      } else if (!updatedUser) {
+        console.log("Profile link not added ");
+        return res.json({
+          status: 400,
+          message: "Profile link not added "
+        });
+      }
+    }  else if (!resp.profile.emailAddress) {
+        console.log("This profile doesnot exists");
+        return res.json({
           status: 400,
           authorization: false,
-          message: "This email Address doesn't exists"
+          message: "This profile doesnot exists"
         });
-      }
+      } 
+    
+  } catch (err) {
+    console.log("error while finding user", err);
+    return res.json({
+      status: 404,
+      message: "error while finding user"
     });
-  });
-  
-  router.post("/addProfileLink", function(req, res) {
-    let emailAddress = req.body.emailAddress;
-  
-    UserModel.findOne({emailAddress: emailAddress }, function(err, resp) {
-      if (resp) {
-        socialMediaAccount = resp.profile.socialMediaAccount;
-        console.log(req.body.id);
-        resp.profile.socialMediaAccount.map(obj => {
-          if(obj.id != undefined && !ids.includes(obj.id)){
-          ids.push(obj.id);
-          }
-        });
-        console.log("ids", ids);
-        if (!ids.includes(req.body.id) && req.body.id != null) {
-          let socialAccountObj = {
-            id: req.body.id,
-            link: req.body.link,
-            linked: true
-          };
-          socialMediaAccount.push(socialAccountObj);
-  
-          resp.profile.updatedAt = date;
-  
-          resp.profile.publicAccount = req.body.publicAccount;
-  
-          let newProfile = {
-            ...resp.profile,
-            socialMediaAccount: [...socialMediaAccount]
-          };
-          console.log("newproile", newProfile);
-          UserModel.updateOne(
-            { emailAddress: emailAddress },
-            { $set: { updatedAt: date, profile: newProfile } },
-            function(err, response) {
-              if (response) {
-                console.log("user updated", response);
-                ids.push(req.body.id);
-               return res.json({
-                  status: 200,
-                  message: "Profile link added successfully",
-                  socialMediaAccount: [ ...socialMediaAccount ]
-                });
-              } else {
-                console.log("error while updating user", err);
-               return res.json({
-                  status: 400,
-                  message: "Profile link not added ",
-                  socialMediaAccount: [ ...socialMediaAccount ]
-                });
-              }
-            }
-          );
-        } else {
-        return res.json({
-            status: 202,
-            message: "This profile link already exists ",
-            socialMediaAccount: [ ...socialMediaAccount ]
-          });
-        }
-      } else if (!resp) {
-        console.log("This email Address doesn't exists");
-        return res.json({
-           status: 400,
-           authorization: false,
-           message: "This email Address doesn't exists"
-         });
-      } else {
-        console.log("error while getting profile", err);
-       return res.json({
-          status: 400,
-          message: "Profile link not added ",
-          socialMediaAccount: [ ...socialMediaAccount ]
-        });
-      }
-    });
-  });
-  
-  router.post("/viewProfile", function(req, res) {
-      let emailAddress = req.body.emailAddress
-    UserModel.findOne({ emailAddress: emailAddress }, function(err, resp) {
-      if (resp) {
-        console.log("user found", resp);
-  /*       const host = req.hostname; */
-  
-        let profileDetails = {
-          firstName: resp.firstName,
-          lastName: resp.lastName,
-         /*  profileImage: req.protocol+ "://" + host  + '/' + resp.profile.profilePicturePath, */
-          ...resp.profile,
-        }
-       return res.json({
-          status: 200,
-          message: "profile fetched successfully",
-          response: {
-            profileDetails: profileDetails,
-          }
-        });
-      } else if (!resp) {
-        console.log("This email Address doesn't exists");
-        return res.json({
-           status: 400,
-           authorization: false,
-           message: "This email Address doesn't exists"
-         });
-      } else {
-        console.log("error while finding user", err);
-       return res.json({
-          status: 400,
-          message: "profile couldn't be fetched"
-        });
-      }
-    });
-  });
+  }
+});
 
-router.put("/deleteProfileLink", function(req, res) {
-  var socialmediaaccount = req.body.socialmediaaccount;
+router.post("/viewProfile", function(req, res) {
+  let emailAddress = req.body.emailAddress;
+  UserModel.findOne({ emailAddress: emailAddress }, function(err, resp) {
+    if (resp.profile.emailAddress) {
+      console.log("user found", resp);
+      let profileDetails = {
+        id: resp._id,
+        firstName: resp.firstName,
+        lastName: resp.lastName,
+        ...resp.profile
+      };
+      return res.json({
+        status: 200,
+        message: "profile fetched successfully",
+        response: {
+          profileDetails: profileDetails
+        }
+      });
+    } else if (!resp.profile.emailAddress) {
+      console.log("This profile doesnot exists");
+      return res.json({
+        status: 400,
+        authorization: false,
+        message: "This profile doesnot exists"
+      });
+    } else {
+      console.log("error while finding user", err);
+      return res.json({
+        status: 400,
+        message: "profile couldn't be fetched"
+      });
+    }
+  });
+});
+
+router.put("/deleteProfileLink", async function(req, res) {
+  var socialmediaaccountId = req.body.socialmediaaccountId;
+  console.log(socialmediaaccountId);
   var emailAddress = req.body.emailAddress;
 
-  UserModel.findOneAndUpdate(
-    { emailAddress: emailAddress },
-    { $pull: { "profile.socialMediaAccount": { id: socialmediaaccount.id }} },
-    {new: true},
-    function(err, resp) {
-      if (resp) {
-        console.log(resp.profile);
-        var index;
-        resp.profile.socialMediaAccount.map(obj => {
-          if (socialmediaaccount.id == obj.id) {
-            index = true;
-          } else {
-            index = false;
-          }
-        });
-        console.log("index", index);
-        if (index == true) {
-          console.log(`socialMediaAccount ${socialmediaaccount.id} deleted`);
-          return res.json({
-            status: 200,
-            message: `socialMediaAccount ${socialmediaaccount.id} deleted`,
-            response: resp.profile
-          });
-        } else {
-          console.log(
-            `socialMediaAccount ${socialmediaaccount.id} doesnot exist`
-          );
-          return res.json({
-            status: 202,
-            message: `socialMediaAccount ${socialmediaaccount.id}  doesnot exist`,
-            response: resp.profile
-          });
-        }
-      } else if (!resp) {
-        console.log("err", err);
-        return res.json({
-          status: 400,
-          message: `This emailAddress doesnot exist`,
-          emailAddress: emailAddress
-        });
-      } else if (err) {
-        console.log("err", err);
-        return res.json({
-          status: 400,
-          message: `error in deleting socialMediaAccount ${linkId}`,
-          response: resp.profile
-        });
-      }
+  var user = await UserModel.findOne({ emailAddress: emailAddress });
+  console.log("user", user);
+
+  if (user.profile.emailAddress) {
+    user.profile.socialMediaAccount[socialmediaaccountId].link = ''
+      user.profile.socialMediaAccount[socialmediaaccountId].linked = false
+    let updatedProfile = {
+      ...user.profile,
+      socialMediaAccount: {...user.profile.socialMediaAccount}
+    };
+
+    var update = await UserModel.updateOne(
+      { emailAddress: emailAddress },
+      { $set: { updatedAt: date, profile: updatedProfile } }
+    );
+
+    if (update) {
+      console.log("update", update);
+      console.log(`socialMediaAccount ${socialmediaaccountId} deleted`);
+      return res.json({
+        status: 200,
+        message: `socialMediaAccount ${socialmediaaccountId} deleted`,
+        response: updatedProfile
+      });
+    } else if (err) {
+      console.log(
+        `error in deleting socialMediaAccount ${socialmediaaccountId}`
+      );
+      return res.json({
+        status: 400,
+        message: `error in deleting socialMediaAccount ${socialmediaaccountId}`
+      });
     }
-  );
+  } else if (!user.profile.emailAddress) {
+    console.log("This profile doesnot exists");
+    return res.json({
+      status: 400,
+      authorization: false,
+      message: "This profile doesnot exists"
+    });
+  } else if (err) {
+    console.log("error in finding user", err);
+  }
 });
+
+router.put("/accountPrivacy", async function(req, res) {
+  let update = await UserModel.findOneAndUpdate(
+    { emailAddress: req.body.emailAddress },
+    {
+      $set: {
+        "profile.updatedAt": date,
+        "profile.publicAccount": req.body.publicAccount
+      }
+    },
+    { new: true }
+  );
+  try {
+    console.log("public", update.profile);
+    if (update.profile.emailAddress) {
+      console.log("account privacy changed");
+      res.json({
+        status: 200,
+        message: "account privacy changed",
+        response: { publicAccount: update.profile.publicAccount }
+      });
+    } else if (!update.profile.emailAddress) {
+      res.json({
+        status: 400,
+        message: "Profile doesnot exists"
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    res.json({
+      status: 400,
+      message: "account privacy not changed"
+    });
+  }
+});
+
+/* router.put('/', function(req,res){
+
+}) */
 
 module.exports = router;
