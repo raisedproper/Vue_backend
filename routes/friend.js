@@ -77,8 +77,7 @@ router.put("/acceptfriend", function(req, res) {
   const friendId = req.body.friendId;
   const userId = req.body.userId;
 
-  let filter = { userId: userId };
-  let update = { status: "approved" };
+  let filter = { friendId: friendId };
 
   PeopleModel.findOne({ userId: userId, friendId: friendId }, function(
     err,
@@ -87,14 +86,15 @@ router.put("/acceptfriend", function(req, res) {
     if (response) {
       console.log("user found", response);
       if (response.status != "approved") {
-        PeopleModel.updateOne(filter, { $set: update }, function(err, update) {
-          if (update) {
+        PeopleModel.updateOne(filter, { $set: { 'status': "approved" } },{ new: true }, function(err, update) {
+          console.log('update',update)
+          if (update.nModified != 0) {
             console.log("friend request accepted", response);
             res.json({
               status: 200,
               message: "friend request accepted"
             });
-          } else if (err) {
+          } else {
             res.json({
               status: 400,
               message: "error while accepting friend request"

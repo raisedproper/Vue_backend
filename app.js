@@ -13,7 +13,9 @@ var authenticationRouter = require('./routes/authentication');
 var friendsRouter = require('./routes/friend');
 var profileRouter = require('./routes/profile');
 var conversationRouter = require('./routes/Conversation');
-var messageRouter = require('./routes/message')
+var messageRouter = require('./routes/message');
+var followRouter = require('./routes/follow');
+var activityRouter = require('./routes/activity');
 
 require('./routes/socket')
 mongoose.connect('mongodb://127.0.0.1:27017/mongodb', {useNewUrlParser: true});
@@ -37,7 +39,8 @@ app.use('/friends', friendsRouter);
 app.use('/profile', profileRouter);
 app.use('/conversation',conversationRouter);
 app.use('/message',messageRouter);
-
+app.use('/follow',followRouter)
+app.use('/activity',activityRouter)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

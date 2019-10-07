@@ -61,26 +61,29 @@ router.post("/getSurroundingPeople", function(req, res) {
   var token = req.headers["token"];
   UserModel.createIndexes()
  
-var {currentlocation,radius,startTime,endTime} = req.body
-console.log('start',startTime)
-console.log('end',endTime)
+var {currentlocation,startTime,endTime} = req.body
+let radius = 91.44
+/* console.log('start',startTime)
+console.log('end',endTime) */
 /* startTime = moment(startTime).format('LT') */
-console.log('startTime',startTime)
+/* console.log('startTime',startTime) */
 /* endTime = moment(endTime).format('LT') */
-console.log('endTime',endTime)
+/* console.log('endTime',endTime) */
   UserModel.find(
     {
-      "location": {
-        $geoWithin: {
-          $centerSphere: [currentlocation, kmToRadian(radius)]
-        }
-      },  
-      token: { $not: { $eq: token } },
-      "updatedAt": {$gte: startTime, $lt: endTime} 
+       "location": { 
+         $nearSphere: { 
+           $geometry: { 
+             type: "Point", coordinates: currentlocation
+            }, 
+            $maxDistance: radius
+          } },
+       token: { $not: { $eq: token } }, 
+      /* "updatedAt": {$gte: startTime, $lt: endTime}  */
     },
     function(err, response) {
       if (response) {
-        console.log("get all users");
+        console.log("get all users",response);
         let modified_response = [];
         response.map(obj => {
           let time =  moment(obj.updatedAt).format('LT')

@@ -36,7 +36,7 @@ location: {
 
 
 userSchema.hasMany('People')
- userSchema.index({location: '2dsphere'});
+userSchema.index({location: '2dsphere'});
 var UserModel = mongoose.model('User',userSchema);
 
 module.exports = UserModel
