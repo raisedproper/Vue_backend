@@ -32,7 +32,8 @@ router.post("/login", function(req, res, next) {
                 response: {
                   token: token,
                   emailAddress: emailAddress,
-                  profilePicture: profileImage
+                  profilePicture: profileImage,
+                  id: user[0]._id
                 }
               };
               res.json(response);
@@ -104,8 +105,10 @@ router.post("/register", function(req, res) {
           res.json({
             status: 200,
             message: "user registered successfully",
-            token: resp.token,
-            emailAddress: resp.emailAddress
+            response: {token: resp.token,
+            emailAddress: resp.emailAddress,
+            id: resp._id
+            }
           });
         }
       });

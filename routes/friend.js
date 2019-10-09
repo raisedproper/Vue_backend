@@ -18,32 +18,33 @@ router.post("/createFriend", async function(req, res) {
   console.log("user2", user2);
 
   if(user1 && user2){
-    console.log("user1", user1.id);
-    console.log("user2", user2.id);
-    PeopleModel.find({ userId: user1.id, friendId: user2.id }, function(
-      err,
-      people
-    ) {
-      if (people.length != 0) {
+     let people = await PeopleModel.findOne({ user: user1.id, friend: user2.id })
+     console.log(people)
+      if (people) {
         console.log("response", people);
         res.json({
           status: 202,
           message: "friend request already sent to this persion"
         });
-      } else if (people.length == 0) {
-        console.log("hggh");
+      } else if (!people) {
         let peopleObj = new PeopleModel({
-          user: user1,
-          friend: user2,
+          user: user1._id,
+          friend: user2._id,
           status: "pending",
           token: token,
           createdAt: date,
           updatedAt: date
         });
         console.log("peopleObj", peopleObj);
-        peopleObj.save((err, response) => {
+        peopleObj.save(async (err, response) => {
           if (response) {
-            console.log(res);
+              const friend1 = await UserModel.findById(user1.id);
+              const friend2 = await UserModel.findById(user2.id);
+            if(friend1) friend1.friends.push(response)
+            await friend1.save() 
+  
+            if(friend2) friend2.friends.push(response)
+            await friend2.save()  
             res.json({
               status: 200,
               message: "friend request sent successfully"
@@ -56,14 +57,8 @@ router.post("/createFriend", async function(req, res) {
             });
           }
         });
-      } else if (err) {
-        console.log("error while finding people", err);
-        res.json({
-          status: 400,
-          message: `error while sending friend request`
-        });
-      }
-    });
+      } 
+    
   } else {
     console.log("These users doesn't exist");
         res.json({
@@ -77,16 +72,16 @@ router.put("/acceptfriend", function(req, res) {
   const friendId = req.body.friendId;
   const userId = req.body.userId;
 
-  let filter = { friendId: friendId };
+  let filter = { friend: friendId };
 
-  PeopleModel.findOne({ userId: userId, friendId: friendId }, function(
+  PeopleModel.findOne({ user: userId, friend: friendId }, function(
     err,
     response
   ) {
     if (response) {
       console.log("user found", response);
       if (response.status != "approved") {
-        PeopleModel.updateOne(filter, { $set: { 'status': "approved" } },{ new: true }, function(err, update) {
+        PeopleModel.update(filter, { $set: { 'status': "approved","updatedAt": date } },{ new: true }, function(err, update) {
           console.log('update',update)
           if (update.nModified != 0) {
             console.log("friend request accepted", response);
@@ -126,8 +121,10 @@ router.put("/acceptfriend", function(req, res) {
 router.delete("/removeFriend/:id", function(req, res) {
   const friendId = req.params.id;
 
-  PeopleModel.findOneAndRemove({friendId: friendId}, function(err, response) {
+  PeopleModel.findOneAndRemove({friend: friendId}, function(err, response) {
     if (response) {
+
+      
       console.log("friend connections removed");
       res.json({
         status: 200,

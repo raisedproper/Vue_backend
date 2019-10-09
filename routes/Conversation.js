@@ -3,19 +3,38 @@ var router = express.Router();
 var ConversationModel = require("../models/Conversation");
 var ChatModel = require("../models/Chat");
 var routeAuthentication = require("../middleware/authentication");
+var moment = require("moment");
+var date = new Date();
 
 router.use(routeAuthentication);
 
-async function findConversation(conversationId) {
-  let response = await ChatModel.find({ conversationId: conversationId });
+async function findConversation(recieverId, senderId) {
+  var conversations = [];
+  let response = await ChatModel.find({
+    $or: [
+      { senderId: senderId, recieverId: recieverId },
+      { senderId: recieverId, recieverId: senderId }
+    ]
+  });
   if (response) {
-    return response;
+    response.map(obj => {
+      let time = moment(obj.updatedAt).format("MMMM Do YYYY, h:mm:ss a");
+      let object = {
+        id: obj.id,
+        senderId: obj.senderId,
+        recieverId: obj.recieverId,
+        readMessage: obj.readMessage,
+        date: time
+      };
+      conversations.push(object);
+    });
+    return conversations;
   }
 }
 
-router.post("/getConversation/:conversationId", async function(req, res) {
-  var { conversationId } = req.params;
-  let response = await findConversation(conversationId);
+router.post("/getConversation", async function(req, res) {
+  var { recieverId, senderId } = req.body;
+  let response = await findConversation(recieverId, senderId);
   try {
     if (response.length > 0) {
       console.log("conversation fetched successfully", response);
@@ -40,13 +59,18 @@ router.post("/getConversation/:conversationId", async function(req, res) {
   }
 });
 
-router.put("/readMessage/:conversationId", async function(req, res) {
-  var { conversationId } = req.params;
-  let response = await findConversation(conversationId);
+router.put("/readMessage", async function(req, res) {
+  var { recieverId, senderId } = req.body;
+  let response = await findConversation(recieverId, senderId);
   try {
     if (response.length > 0) {
       ChatModel.updateMany(
-        { conversationId: conversationId },
+        {
+          $or: [
+            { senderId: senderId, recieverId: recieverId },
+            { senderId: recieverId, recieverId: senderId }
+          ]
+        },
         { $set: { readMessage: true, updatedAt: date } },
         function(err, response) {
           if (response) {
@@ -80,35 +104,31 @@ router.put("/readMessage/:conversationId", async function(req, res) {
   }
 });
 
-router.delete("/deleteConversation/:conversationId", async function(req, res) {
-  var { conversationId } = req.params;
+router.put("/deleteConversation", async function(req, res) {
+  var { recieverId, senderId, showToReceiver, showToSender } = req.body;
 
-  let resp = await ConversationModel.findByIdAndRemove(conversationId);
-
+  let resp = await ChatModel.findOneAndUpdate(
+    { senderId: senderId, recieverId: recieverId },
+    {
+      $set: {
+        "showToSender": showToSender,
+        "showToReceiver": showToReceiver,
+        "updatedAt": date
+      }
+    },
+    { new: true }
+  );
   try {
     if (resp) {
-      ChatModel.findOneAndRemove({ conversationId: conversationId }, function(
-        err,
-        response
-      ) {
-        if (response) {
-          console.log("conversation removed");
-          res.json({
-            status: 200,
-            message: "conversation deleted"
-          });
-        } else if (err) {
-          console.log("error while removing conversation", err);
-          res.json({
-            status: 400,
-            message: "error while removing conversation"
-          });
-        }
+      console.log("conversation removed", resp);
+      res.json({
+        status: 200,
+        message: "conversation removed successfully"
       });
     } else if (!resp) {
       console.log("no such conversation exists");
       res.json({
-        status: 404,
+        status: 202,
         message: "no such conversation exists"
       });
     }

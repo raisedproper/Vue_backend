@@ -135,7 +135,8 @@ router.post("/createprofile", function(req, res) {
     profession,
     phoneNumber,
     emailAddress,
-    gender
+    gender,
+    address
   } = req.body;
 
  socialMediaAccount["gmail"].link = emailAddress
@@ -148,6 +149,7 @@ router.post("/createprofile", function(req, res) {
           id: resp.id,
           emailAddress: emailAddress,
           phoneNumber: phoneNumber,
+          address: address,
           age: age,
           gender: gender,
           profession: profession,
@@ -384,8 +386,5 @@ router.put("/accountPrivacy", async function(req, res) {
   }
 });
 
-/* router.put('/', function(req,res){
-
-}) */
 
 module.exports = router;

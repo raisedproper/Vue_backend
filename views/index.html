@@ -5,8 +5,8 @@
     <script>
       const socket = io("http://localhost:3001");
       socket.emit("connection", "hello connection");
-      socket.emit("send_message",{senderId: '5d8c9142019eb6311271c225',
-      recieverId: '5d8b6790863ee83f85cb7800', message:'im'})
+      socket.emit("send_message",{senderId: '5d9db9f35aa0b1467a823f58',
+      recieverId: '5d9dac8803c0ca192dee2ff6', message:'yo'})
       socket.on('send_message', function(msg){
         console.log(msg)
       });

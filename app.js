@@ -16,6 +16,7 @@ var conversationRouter = require('./routes/Conversation');
 var messageRouter = require('./routes/message');
 var followRouter = require('./routes/follow');
 var activityRouter = require('./routes/activity');
+var indexRouter = require('./routes/index')
 
 require('./routes/socket')
 mongoose.connect('mongodb://127.0.0.1:27017/mongodb', {useNewUrlParser: true});
@@ -33,6 +34,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public/images')));
 
+app.use('/',indexRouter)
 app.use('/people', peopleRouter);
 app.use('/authentication', authenticationRouter);
 app.use('/friends', friendsRouter);

@@ -6,6 +6,8 @@ var ChatSchema = new mongoose.Schema({
         senderId: String,
         recieverId: String,
         readMessage: Boolean,
+        showToSender: Boolean,
+        showToReceiver: Boolean,
         createdAt: Date,
         updatedAt: Date
 })

@@ -92,9 +92,10 @@ console.log('end',endTime) */
           let new_obj = {
             firstName: obj.firstName,
             lastName: obj.lastName,
-            location: obj.location,
+            location: {latitude: obj.location.coordinates[1], longitude: obj.location.coordinates[0]},
             id: obj._id,
             emailAddress: obj.emailAddress,
+            address: obj.address,
             publicAccount: obj.profile.publicAccount,
             profilePicture: obj.profile.profilePicturePath,
             gender: obj.profile.gender,

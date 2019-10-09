@@ -62,6 +62,8 @@ async function createMessage(obj) {
     senderId: obj.senderId,
     recieverId: obj.recieverId,
     readMessage: obj.readMessage,
+    showToSender: true,
+    showToReceiver: true,
     createdAt: date,
     updatedAt: date
   });
