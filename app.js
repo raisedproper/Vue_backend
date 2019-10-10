@@ -20,6 +20,7 @@ var indexRouter = require('./routes/index')
 
 require('./routes/socket')
 mongoose.connect('mongodb://127.0.0.1:27017/mongodb', {useNewUrlParser: true});
+mongoose.set('useFindAndModify', false);
 
 var app = express();
 

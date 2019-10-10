@@ -3,25 +3,25 @@ var router = express.Router();
 var routeAuthentication = require("../middleware/authentication");
 var ConversationModel = require("../models/Conversation");
 var ChatModel = require("../models/Chat");
+var UserModel = require("../models/User");
 
 const io = require("socket.io")(3001);
 var date = new Date();
+var moment = require("moment");
 
 io.on("connection", function(socket) {
   socket.on("send_message", async function(msg) {
     var conversationId;
     let existingConversation = await ConversationModel.findOne({
-      $or:[
-      {senderId: msg.senderId,
-      recieverId: msg.recieverId },
-      {senderId: msg.recieverId,
-      recieverId: msg.senderId}
+      $or: [
+        { senderId: msg.senderId, recieverId: msg.recieverId },
+        { senderId: msg.recieverId, recieverId: msg.senderId }
       ]
     });
 
     if (existingConversation) {
       console.log("conversation exists", existingConversation);
-      conversationId = existingConversation.id
+      conversationId = existingConversation.id;
     } else {
       console.log("conversation not", existingConversation);
       let newConversation = new ConversationModel({
@@ -35,23 +35,33 @@ io.on("connection", function(socket) {
       if (result) {
         console.log("New conversation saved", result);
         conversationId = result.id;
+
+        let user1 = await UserModel.findById(msg.senderId);
+        let user2 = await UserModel.findById(msg.recieverId);
+        if (user1 && user2) {
+          user1.recievers.push(conversationId);
+          await user1.save()
+
+          user2.recievers.push(conversationId);
+          await user2.save()
+        }
       } else {
         console.log("New conversation not saved", result);
       }
     }
     let createMessageObj = {
-        messageBody: msg.message,
-        conversationId: conversationId,
-        readMessage: false,
-        senderId: msg.senderId,
-        recieverId: msg.recieverId
-      };
+      messageBody: msg.message,
+      conversationId: conversationId,
+      readMessage: false,
+      senderId: msg.senderId,
+      recieverId: msg.recieverId
+    };
 
-      let newMessage = await createMessage(createMessageObj);
-      if (newMessage) {
-          io.emit('send_message',newMessage)
-         console.log(newMessage)
-      }
+    let newMessage = await createMessage(createMessageObj);
+    if (newMessage) {
+      console.log("newMessage", newMessage);
+      io.emit("recieve_message", newMessage);
+    }
   });
 });
 
@@ -71,7 +81,15 @@ async function createMessage(obj) {
   let saveMessage = await message.save();
   if (saveMessage) {
     console.log("Message saved", saveMessage);
-    return { status: 200, message: "message sent successfully", response:{messageId: saveMessage.id} };
+    return {
+      status: 200,
+      message: "message sent successfully",
+      response: {
+        message: saveMessage.messageBody,
+        senderId: saveMessage.senderId,
+        date: saveMessage.createdAt
+      }
+    };
   } else {
     console.log("error saving message");
     return { status: 400, message: "message sending unsuccessfull" };

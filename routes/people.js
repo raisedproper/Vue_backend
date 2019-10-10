@@ -1,6 +1,5 @@
 var express = require("express");
 var router = express.Router();
-var PeopleModel = require("../models/People");
 var UserModel = require("../models/User");
 var routeAuthentication = require("../middleware/authentication");
 /* GET home page. */
@@ -32,36 +31,25 @@ var kmToRadian = function(km){
   return km / earthRadiusInkm;
 };
 
-router.put("/sendLocation", async function(req, res) {
+router.post("/getSurroundingPeople",async function(req, res) {
   var token = req.headers["token"];
-  var { location } = req.body;
-  console.log("location", location);
-
+  UserModel.createIndexes()
+  var {currentlocation,startTime,endTime} = req.body
+  let location = {
+    "coordinates": currentlocation,
+    "type": "Point"
+}
   let updatedUser = await UserModel.findOneAndUpdate(
     { token: token },
     { $set: { location: location, updatedAt: date } },
     { new: true }
   );
-  console.log(updatedUser);
   if (updatedUser) {
-    res.json({
-      status: 200,
-      message: "location of user updated",
-      response: updatedUser.location
-    });
+    console.log('location of user updated')
   } else {
-    res.json({
-      status: 400,
-      message: "location of user not updated"
-    });
+    console.log("location of user not updated")
   }
-});
 
-router.post("/getSurroundingPeople", function(req, res) {
-  var token = req.headers["token"];
-  UserModel.createIndexes()
- 
-var {currentlocation,startTime,endTime} = req.body
 let radius = 91.44
 /* console.log('start',startTime)
 console.log('end',endTime) */
@@ -83,7 +71,7 @@ console.log('end',endTime) */
     },
     function(err, response) {
       if (response) {
-        console.log("get all users",response);
+        console.log("get all users");
         let modified_response = [];
         response.map(obj => {
           let time =  moment(obj.updatedAt).format('LT')
@@ -95,7 +83,7 @@ console.log('end',endTime) */
             location: {latitude: obj.location.coordinates[1], longitude: obj.location.coordinates[0]},
             id: obj._id,
             emailAddress: obj.emailAddress,
-            address: obj.address,
+            address: obj.profile.address,
             publicAccount: obj.profile.publicAccount,
             profilePicture: obj.profile.profilePicturePath,
             gender: obj.profile.gender,

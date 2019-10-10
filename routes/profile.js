@@ -266,9 +266,11 @@ router.post("/addProfileLink", async function(req, res) {
   }
 });
 
-router.post("/viewProfile", function(req, res) {
+router.post("/viewProfile",async function(req, res) {
   let emailAddress = req.body.emailAddress;
-  UserModel.findOne({ emailAddress: emailAddress }, function(err, resp) {
+ let resp = await UserModel.findOne({ emailAddress: emailAddress })
+ console.log('resp',resp)
+ if(resp){
     if (resp.profile.emailAddress) {
       console.log("user found", resp);
       let profileDetails = {
@@ -291,14 +293,8 @@ router.post("/viewProfile", function(req, res) {
         authorization: false,
         message: "This profile doesnot exists"
       });
-    } else {
-      console.log("error while finding user", err);
-      return res.json({
-        status: 400,
-        message: "profile couldn't be fetched"
-      });
-    }
-  });
+    } 
+  }
 });
 
 router.put("/deleteProfileLink", async function(req, res) {

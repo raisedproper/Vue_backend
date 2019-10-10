@@ -9,6 +9,7 @@ var userSchema = new mongoose.Schema({
         createdAt: Date,
         updatedAt: Date,
         friends: [{ type: Schema.Types.ObjectId, ref: 'People' }],
+        recievers: [{ type: Schema.Types.ObjectId, ref: 'Conversation' }],
 
  profile: {
     age: Number,

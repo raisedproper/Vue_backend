@@ -1,26 +1,13 @@
-var mongoose = require('mongoose');
+var mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
 var ConversationSchema = new mongoose.Schema({
-        senderId: String,
-        recieverId: String,
-        createdAt: Date,
-        updatedAt: Date
-})
+  senderId: { type: Schema.Types.ObjectId, ref: 'User' },
+  recieverId: { type: Schema.Types.ObjectId, ref: 'User' },
+  createdAt: Date,
+  updatedAt: Date
+});
 
-ConversationSchema.belongsTo('users', {
-    as: 'sender',
-    localField: 'sender_id'
-  })
+var ConversationModel = mongoose.model("Conversation", ConversationSchema);
 
-  ConversationSchema.belongsTo('users', {
-    as: 'reciever',
-    localField: 'reciever_id'
-  })
-
-  ConversationSchema.belongsTo('chats',{
-    as: 'chats',
-    localField: 'chat'
-  })
-  var ConversationModel = mongoose.model('Conversation',ConversationSchema)
-
-module.exports = ConversationModel
+module.exports = ConversationModel;

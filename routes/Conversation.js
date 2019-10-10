@@ -18,13 +18,10 @@ async function findConversation(recieverId, senderId) {
   });
   if (response) {
     response.map(obj => {
-      let time = moment(obj.updatedAt).format("MMMM Do YYYY, h:mm:ss a");
       let object = {
-        id: obj.id,
         senderId: obj.senderId,
-        recieverId: obj.recieverId,
-        readMessage: obj.readMessage,
-        date: time
+        message: obj.messageBody,
+        date: obj.createdAt
       };
       conversations.push(object);
     });
@@ -35,6 +32,7 @@ async function findConversation(recieverId, senderId) {
 router.post("/getConversation", async function(req, res) {
   var { recieverId, senderId } = req.body;
   let response = await findConversation(recieverId, senderId);
+  console.log('sgs',response)
   try {
     if (response.length > 0) {
       console.log("conversation fetched successfully", response);
