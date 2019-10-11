@@ -63,10 +63,14 @@ router.post("/createFriend", async function(req, res) {
       if (response && response2) {
         const friend1 = await UserModel.findById(user1.id);
         const friend2 = await UserModel.findById(user2.id);
-        if (friend1) {friend1.friends.push(response)};
+        if (friend1) {
+          friend1.friends.push(response);
+        }
         await friend1.save();
 
-        if (friend2) {friend2.friends.push(response2)};
+        if (friend2) {
+          friend2.friends.push(response2);
+        }
         await friend2.save();
         return res.json({
           status: 200,
@@ -89,99 +93,127 @@ router.post("/createFriend", async function(req, res) {
   }
 });
 
-router.put("/acceptfriend",async function(req, res) {
+router.put("/acceptfriend", async function(req, res) {
   const friendId = req.body.friendId;
   const userId = req.body.userId;
 
   let filter = { friend: userId, user: friendId };
   let filter2 = { user: userId, friend: friendId };
 
- let response =await PeopleModel.findOne({ friend: userId, user: friendId })
- let response2 =await PeopleModel.findOne({ user: userId, friend: friendId })
+  let response = await PeopleModel.findOne({ friend: userId, user: friendId });
+  let response2 = await PeopleModel.findOne({ user: userId, friend: friendId });
 
-    if (response && response2) {
-      console.log("user found", response);
-      if (response.status != "approved") {
-      var update = await PeopleModel.update(filter,{ $set: { status: "approved", updatedAt: date } },{ new: true })
-            console.log("update1", update);
+  if (response && response2) {
+    console.log("user found", response);
+    if (response.status != "approved") {
+      var update = await PeopleModel.update(
+        filter,
+        { $set: { status: "approved", updatedAt: date } },
+        { new: true }
+      );
+      console.log("update1", update);
 
-            var update2 =await PeopleModel.update(filter2,  { $set: { status: "approved", updatedAt: date } },{ new: true })
-            console.log('update2',update2)
-            
-             if (update.nModified != 0 && update2.nModified != 0) {
-              console.log("friend request accepted", response);
-              return res.json({
-                status: 200,
-                message: "friend request accepted"
-              });
-            } else {
-               res.json({
-                status: 400,
-                message: "error while accepting friend request"
-              });
-            } 
+      var update2 = await PeopleModel.update(
+        filter2,
+        { $set: { status: "approved", updatedAt: date } },
+        { new: true }
+      );
+      console.log("update2", update2);
 
-         
-      } else if (response.status == "approved" && response2.status == "approved") {
+      if (update.nModified != 0 && update2.nModified != 0) {
+        console.log("friend request accepted", response);
         return res.json({
-          status: 202,
-          message: "Already added as friend"
+          status: 200,
+          message: "friend request accepted"
+        });
+      } else {
+        res.json({
+          status: 400,
+          message: "error while accepting friend request"
         });
       }
-    } else if (!response || !response2) {
-      console.log("no user found", response);
+    } else if (
+      response.status == "approved" &&
+      response2.status == "approved"
+    ) {
       return res.json({
-        status: 203,
-        message: "Kindly send friend request to approve"
+        status: 202,
+        message: "Already added as friend"
       });
-    } 
+    }
+  } else if (!response || !response2) {
+    console.log("no user found", response);
+    return res.json({
+      status: 203,
+      message: "Kindly send friend request to approve"
+    });
+  }
 });
 
 router.put("/removeFriend/:id", async function(req, res) {
   const friendId = req.params.id;
   var token = req.headers["token"];
 
-  let response = PeopleModel.findOneAndRemove({ friend: friendId });
+  let user = await UserModel.findOne({ token: token });
 
-  try {
-    if (response) {
-      let user = await UserModel.findOne({ token: token });
-      console.log("user", user);
-      const friend = await UserModel.findById(friendId);
-      const people = await PeopleModel.findOne({
-        user: user.id,
-        friend: friendId
-      });
+  if (user) {
+    let response = await PeopleModel.findOneAndRemove({
+      user: user.id,
+      friend: friendId
+    });
 
-      if (user && friend) {
-        let update1 = await UserModel.findOneAndUpdate(
-          { _id: user._id },
-          { $pullAll: { friends: [mongoose.Types.ObjectId(people._id)] } },
-          { new: true }
-        );
-        let update2 = await UserModel.findOneAndUpdate(
-          { _id: friendId },
-          { $pullAll: { friends: [mongoose.Types.ObjectId(people._id)] } },
-          { new: true }
-        );
-        console.log("update1", update1, "update2", update2);
-        if (update1.emailAddress && update2.emailAddress) {
-          console.log("friend connections removed");
-          return res.json({
-            status: 200,
-            message: "friend connection removed"
-          });
-        } else {
-          console.log("friend connection not removed");
-          return res.json({
-            status: 400,
-            message: "friend connection not removed"
-          });
-        }
+    let response2 = await PeopleModel.findOneAndRemove({
+      user: friendId,
+      friend: user.id
+    });
+
+    if (response && response2) {
+      console.log("response111", response);
+      let update1 = await UserModel.findOneAndUpdate(
+        { _id: user.id },
+        { $pullAll: { friends: [mongoose.Types.ObjectId(response._id)] } },
+        { new: true }
+      );
+      console.log("response222", response2);
+      let update2 = await UserModel.findOneAndUpdate(
+        { _id: friendId },
+        { $pullAll: { friends: [mongoose.Types.ObjectId(response2._id)] } },
+        { new: true }
+      );
+
+      if(response.status == 'approved' && response2.status == 'approved')
+      {
+      if (update1.emailAddress && update2.emailAddress) {
+        console.log("friend connections removed");
+        return res.json({
+          status: 200,
+          message: "friend connection removed"
+        });
+      } else {
+        console.log("friend connection not removed");
+        return res.json({
+          status: 400,
+          message: "friend connection not removed"
+        });
+      }
+    } else if(response.status == 'pending' && response2.status == 'pending'){
+      if (update1.emailAddress && update2.emailAddress) {
+        console.log("friend request rejected successfully");
+        return res.json({
+          status: 200,
+          message: "friend request rejected successfully"
+        });
+      } else {
+        console.log("friend request not rejected");
+        return res.json({
+          status: 400,
+          message: "friend request not rejected"
+        });
       }
     }
-  } catch (err) {
-    console.log("This friend doesnot exist", err);
+    }
+  } else {
+    console.log("This friend doesnot exist");
     res.json({
       status: 404,
       message: "This friend doesnot exist"

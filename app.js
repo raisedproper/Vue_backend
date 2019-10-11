@@ -13,7 +13,6 @@ var authenticationRouter = require('./routes/authentication');
 var friendsRouter = require('./routes/friend');
 var profileRouter = require('./routes/profile');
 var conversationRouter = require('./routes/Conversation');
-var messageRouter = require('./routes/message');
 var followRouter = require('./routes/follow');
 var activityRouter = require('./routes/activity');
 var indexRouter = require('./routes/index')
@@ -41,7 +40,6 @@ app.use('/authentication', authenticationRouter);
 app.use('/friends', friendsRouter);
 app.use('/profile', profileRouter);
 app.use('/conversation',conversationRouter);
-app.use('/message',messageRouter);
 app.use('/follow',followRouter)
 app.use('/activity',activityRouter)
 

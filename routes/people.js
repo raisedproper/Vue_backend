@@ -1,6 +1,7 @@
 var express = require("express");
 var router = express.Router();
 var UserModel = require("../models/User");
+var PeopleModel = require("../models/People");
 var routeAuthentication = require("../middleware/authentication");
 /* GET home page. */
 router.use(routeAuthentication);
@@ -39,12 +40,14 @@ router.post("/getSurroundingPeople",async function(req, res) {
     "coordinates": currentlocation,
     "type": "Point"
 }
+var userId;
   let updatedUser = await UserModel.findOneAndUpdate(
     { token: token },
     { $set: { location: location, updatedAt: date } },
     { new: true }
   );
   if (updatedUser) {
+    userId = updatedUser.id
     console.log('location of user updated')
   } else {
     console.log("location of user not updated")
@@ -73,9 +76,12 @@ console.log('end',endTime) */
       if (response) {
         console.log("get all users");
         let modified_response = [];
-        response.map(obj => {
+        response.map(async obj => {
           let time =  moment(obj.updatedAt).format('LT')
-          console.log('time',time)
+/* let checkFriends = await PeopleModel.find({
+  $or: [{ senderId: userId, recieverId: obj.id}, {senderId: obj.id,recieverId: userId }]
+})
+console.log('check if friends',checkFriends) */
 
           let new_obj = {
             firstName: obj.firstName,

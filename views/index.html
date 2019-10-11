@@ -5,8 +5,8 @@
     <script>
       const socket = io("http://localhost:3001");
       socket.emit("connection", "hello connection");
-      socket.emit("send_message",{senderId: '5d9f035cc169622876cd9aa0',
-      recieverId: '5d9f0370c169622876cd9aa1', message:'hello'})
+      socket.emit("send_message",{senderId: '5d9f066162cedf365cfc33c2',
+      recieverId: '5d9f035cc169622876cd9aa0', message:'youtube links'})
       socket.on('recieve_message', function(msg){
         console.log('message',msg)
       });

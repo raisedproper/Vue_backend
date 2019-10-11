@@ -109,6 +109,7 @@ router.put("/deleteConversation", async function(req, res) {
     { senderId: senderId, recieverId: recieverId },
     {
       $set: {
+        "chats": [],
         "showToSender": showToSender,
         "showToReceiver": showToReceiver,
         "updatedAt": date
