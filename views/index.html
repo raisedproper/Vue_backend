@@ -3,13 +3,15 @@
   <body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
     <script>
-      const socket = io("http://localhost:3001");
-      socket.emit("connection", "hello connection");
-      socket.emit("send_message",{senderId: '5d9f066162cedf365cfc33c2',
-      recieverId: '5d9f035cc169622876cd9aa0', message:'youtube links'})
+      const socket = io("http://localhost:3002/chat");
+  /*    socket.emit('send_message',{"senderId": "5d9f066162cedf365cfc33c2",
+      "recieverId": "5d9f07d219eb8b39a6b65e63", "message":"ghj"})  */
       socket.on('recieve_message', function(msg){
-        console.log('message',msg)
-      });
+        console.log('recieve_message',msg)
+      }); 
+       socket.on('activity', function(act){
+        console.log('activity',act)
+      }); 
     </script>
   </body>
 </html>

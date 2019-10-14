@@ -101,10 +101,18 @@ router.get("/inbox/:id", async function(req, res) {
         Sender == true
           ? person.recieverId.firstName
           : person.senderId.firstName,
-      profilePicture:
+      profilePicturePath:
         Sender == true
           ? person.recieverId.profile.profilePicturePath
           : person.senderId.profile.profilePicturePath,
+          lastName:
+        Sender == true
+          ? person.recieverId.lastName
+          : person.senderId.lastName,
+          address:   
+          Sender == true
+          ? person.recieverId.profile.address
+          : person.senderId.profile.address,
       message: person.chats[0].messageBody,
       readMessage: person.chats[0].readMessage,
       sentBysender: sentBySender

@@ -7,6 +7,15 @@ var mongoose = require('mongoose');
 const ngrok = require('ngrok');
 const { mongooseAssociation } = require('mongoose-association')
 mongooseAssociation(mongoose)
+ var io = require("socket.io")(3002);
+var soc
+const nsp = io.of('/chat')
+
+nsp.on("connection", function(socket) {
+  console.log('socket connected')
+ soc = socket;
+ require('./routes/socket').start(soc,nsp);
+}) 
 
 var peopleRouter = require('./routes/people');
 var authenticationRouter = require('./routes/authentication');
@@ -17,7 +26,6 @@ var followRouter = require('./routes/follow');
 var activityRouter = require('./routes/activity');
 var indexRouter = require('./routes/index')
 
-require('./routes/socket')
 mongoose.connect('mongodb://127.0.0.1:27017/mongodb', {useNewUrlParser: true});
 mongoose.set('useFindAndModify', false);
 
@@ -38,7 +46,7 @@ app.use('/',indexRouter)
 app.use('/people', peopleRouter);
 app.use('/authentication', authenticationRouter);
 app.use('/friends', friendsRouter);
-app.use('/profile', profileRouter);
+app.use('/profile', profileRouter(soc,nsp));
 app.use('/conversation',conversationRouter);
 app.use('/follow',followRouter)
 app.use('/activity',activityRouter)
