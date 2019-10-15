@@ -45,7 +45,7 @@ app.use(express.static(path.join(__dirname, 'public/images')));
 app.use('/',indexRouter)
 app.use('/people', peopleRouter);
 app.use('/authentication', authenticationRouter);
-app.use('/friends', friendsRouter);
+app.use('/friends', friendsRouter(soc,nsp));
 app.use('/profile', profileRouter(soc,nsp));
 app.use('/conversation',conversationRouter);
 app.use('/follow',followRouter)

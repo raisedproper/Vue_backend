@@ -27,63 +27,45 @@ router.use(routeAuthentication);
 
 var socialMediaAccount = {
   facebook: {
+    username: "",
     link: "",
     linked: false
   },
   gmail: {
+    username: "",
     link: "",
     linked: false
   },
   instagram: {
+    username: "",
     link: "",
     linked: false
   },
   youtube: {
+    username: "",
     link: "",
     linked: false
   },
   snapchat: {
+    username: "",
     link: "",
     linked: false
   },
   website: {
+    username: "",
     link: "",
     linked: false
   },
   linkedIn: {
+    username: "",
     link: "",
     linked: false
   },
   twitter: {
+    username: "",
     link: "",
     linked: false
   }
-}
-
-
-function findUser(emailAddress){
-  UserModel.find({emailAddress: emailAddress}, function(err,resp){
-    if(resp){
-      let obj = {
-        status: 200,
-        message: 'user found',
-        response: resp
-      }
-      return obj
-    } else if (!resp){
-      let obj = {
-        status: 400,
-        message: 'user not found',
-      }
-      return obj
-    } else if(err){
-      let obj = {
-        status: 404,
-        message: 'error finding user',
-      }
-      return obj
-    }
-  })
 }
 
  module.exports = function(socket,nsp) { 
@@ -219,6 +201,7 @@ function findUser(emailAddress){
       if (user.profile.emailAddress) {
         console.log(user.profile.socialMediaAccount)
         console.log(profileLink.link)
+        user.profile.socialMediaAccount[profileLink.id].username = profileLink.username
         user.profile.socialMediaAccount[profileLink.id].link = profileLink.link
         user.profile.socialMediaAccount[profileLink.id].linked = profileLink.linked
   
@@ -230,7 +213,7 @@ function findUser(emailAddress){
         };
         console.log("newproile", newProfile);
   
-        let updatedUser = await UserModel.updateOne(
+        let updatedUser = await UserModel.findOneAndUpdate(
           { emailAddress: emailAddress },
           { $set: { updatedAt: date, profile: newProfile } },
           { new: true }
@@ -241,7 +224,7 @@ function findUser(emailAddress){
           return res.json({
             status: 200,
             message: "Profile link added successfully",
-            response: newProfile
+            response: {...newProfile, firstName: updatedUser.firstName,lastName: updatedUser.lastName}
           });
         } else if (!updatedUser) {
           console.log("Profile link not added ");
@@ -321,6 +304,7 @@ function findUser(emailAddress){
     console.log("user", user);
   
     if (user.profile.emailAddress) {
+      user.profile.socialMediaAccount[socialmediaaccountId].username = ''
       user.profile.socialMediaAccount[socialmediaaccountId].link = ''
         user.profile.socialMediaAccount[socialmediaaccountId].linked = false
       let updatedProfile = {
@@ -328,7 +312,7 @@ function findUser(emailAddress){
         socialMediaAccount: {...user.profile.socialMediaAccount}
       };
   
-      var update = await UserModel.updateOne(
+      var update = await UserModel.findOneAndUpdate(
         { emailAddress: emailAddress },
         { $set: { updatedAt: date, profile: updatedProfile } }
       );
@@ -339,7 +323,7 @@ function findUser(emailAddress){
         return res.json({
           status: 200,
           message: `socialMediaAccount ${socialmediaaccountId} deleted`,
-          response: updatedProfile
+          response: {...updatedProfile,firstName: update.firstName, lastName: update.lastName}
         });
       } else if (err) {
         console.log(

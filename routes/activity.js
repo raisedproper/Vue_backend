@@ -12,7 +12,7 @@ router.use(routeAuthentication);
 
 router.get("/connections/:id", async (req, res) => {
   var { id } = req.params;
-  console.log('io',soc)
+
   let user = await UserModel.findOne({ _id: id }).populate({
     path: "friends",
     match: { status: "approved" },

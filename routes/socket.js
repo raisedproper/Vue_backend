@@ -76,7 +76,7 @@ module.exports = {
               profilePicture: `${sender.profile.profilePicturePath}`,
               time: moment(newMessage.date).format("LT")
             };
-           /*  console.log("activityObj", activityObj); */
+
             nsp.emit("activity", activityObj);
           }
         }
