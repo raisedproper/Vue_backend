@@ -2,13 +2,12 @@ var express = require("express");
 var router = express.Router();
 var date = new Date();
 var UserModel = require("../models/User");
-var ChatModel = require("../models/Chat");
+var ActivityModel = require("../models/Activity");
 var ConversationModel = require("../models/Conversation");
 var moment = require("moment");
 var routeAuthentication = require("../middleware/authentication");
 var soc = require('./socket')
 router.use(routeAuthentication);
-
 
 router.get("/connections/:id", async (req, res) => {
   var { id } = req.params;
@@ -77,10 +76,6 @@ router.get("/inbox/:id", async function(req, res) {
   console.log("conversation", conversations);
 
   conversations.map(person => {
-    console.log(
-      "sfsff",
-      person.chats[person.chats.length - 1].senderId.equals(id)
-    );
     if (person.chats[person.chats.length - 1].senderId.equals(id)) {
       Sender = true;
     } else {
@@ -131,5 +126,30 @@ router.get("/inbox/:id", async function(req, res) {
     });
   }
 });
+
+router.get('/notifications/:id',async function(req,res){
+  var { id } = req.params;
+
+let activity = await ActivityModel.findOne({userId: id})
+
+if(activity){
+  res.send({
+    status: 200,
+    message: 'notifications fetched successfully',
+    response: activity.notifications
+  })
+} else {
+  res.send({
+    status: 400,
+    message: 'no notifications',
+  })
+}
+})
+
+router.get('/count/:id',async function(req,res){
+  var { id } = req.params;
+
+
+})
 
 module.exports = router;

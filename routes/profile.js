@@ -1,10 +1,12 @@
 var express = require("express");
 var router = express.Router();
 var UserModel = require("../models/User");
+var FollowModel = require("../models/FollowAccount");
 var multer = require("multer");
 var path = require("path");
 var routeAuthentication = require("../middleware/authentication");
 var moment = require("moment");
+var notification = require("../middleware/notification");
 var socialMediaAccount = [];
 var ids = [];
 
@@ -29,7 +31,8 @@ var socialMediaAccount = {
   facebook: {
     username: "",
     link: "",
-    linked: false
+    linked: false,
+    linkedTofacebook: false
   },
   gmail: {
     username: "",
@@ -39,17 +42,20 @@ var socialMediaAccount = {
   instagram: {
     username: "",
     link: "",
-    linked: false
+    linked: false,
+    linkedToinstagram: false
   },
   youtube: {
     username: "",
     link: "",
-    linked: false
+    linked: false,
+    linkedToyoutube: false
   },
   snapchat: {
     username: "",
     link: "",
-    linked: false
+    linked: false,
+    linkedTosnapchat: false
   },
   website: {
     username: "",
@@ -59,28 +65,30 @@ var socialMediaAccount = {
   linkedIn: {
     username: "",
     link: "",
-    linked: false
+    linked: false,
+    LinkedTolnkedIn: false
   },
   twitter: {
     username: "",
     link: "",
-    linked: false
+    linked: false,
+    linkedTotwitter: false
   }
-}
+};
 
- module.exports = function(socket,nsp) { 
+module.exports = function(socket, nsp) {
   router.post("/imageUpload", upload.single("profilePicture"), async function(
     req,
     res
   ) {
     var token = req.headers["token"];
-    console.log('req.file 6768699',req.file)
+    console.log("req.file 6768699", req.file);
     var profilePicture = req.file ? req.file.filename : "";
-  
+
     if (!profilePicture) {
       console.log("profile picture is not uploaded");
     }
-  
+
     let resp = await UserModel.findOneAndUpdate(
       { token: token },
       {
@@ -96,7 +104,7 @@ var socialMediaAccount = {
       return res.json({
         status: 200,
         message: "image uploaded successfully",
-        response: {profilePicturePath: resp.profile.profilePicturePath}
+        response: { profilePicturePath: resp.profile.profilePicturePath }
       });
     } else if (err) {
       console.log("error while uploading image");
@@ -112,7 +120,7 @@ var socialMediaAccount = {
       });
     }
   });
-  
+
   router.post("/createprofile", function(req, res) {
     var {
       age,
@@ -122,10 +130,10 @@ var socialMediaAccount = {
       gender,
       address
     } = req.body;
-  
-   socialMediaAccount["gmail"].link = emailAddress
-   socialMediaAccount["gmail"].linked = true
-  
+
+    socialMediaAccount["gmail"].link = emailAddress;
+    socialMediaAccount["gmail"].linked = true;
+
     UserModel.findOne({ emailAddress: emailAddress }, function(err, resp) {
       if (resp) {
         if (typeof resp.profile.emailAddress == "undefined") {
@@ -146,7 +154,7 @@ var socialMediaAccount = {
             updatedAt: date
           };
           let update = { user: resp, profile };
-  
+
           UserModel.update({ emailAddress: emailAddress }, update, function(
             err,
             response
@@ -191,7 +199,7 @@ var socialMediaAccount = {
       }
     });
   });
-  
+
   router.post("/addProfileLink", async function(req, res) {
     let emailAddress = req.body.emailAddress;
     var profileLink = req.body.profileLink;
@@ -199,32 +207,38 @@ var socialMediaAccount = {
     let user = await UserModel.findOne({ emailAddress: emailAddress });
     try {
       if (user.profile.emailAddress) {
-        console.log(user.profile.socialMediaAccount)
-        console.log(profileLink.link)
-        user.profile.socialMediaAccount[profileLink.id].username = profileLink.username
-        user.profile.socialMediaAccount[profileLink.id].link = profileLink.link
-        user.profile.socialMediaAccount[profileLink.id].linked = profileLink.linked
-  
+        console.log(user.profile.socialMediaAccount);
+        console.log(profileLink.link);
+        user.profile.socialMediaAccount[profileLink.id].username =
+          profileLink.username;
+        user.profile.socialMediaAccount[profileLink.id].link = profileLink.link;
+        user.profile.socialMediaAccount[profileLink.id].linked =
+          profileLink.linked;
+
         user.profile.updatedAt = date;
-  
+
         let newProfile = {
           ...user.profile,
-          socialMediaAccount: {...user.profile.socialMediaAccount}
+          socialMediaAccount: { ...user.profile.socialMediaAccount }
         };
         console.log("newproile", newProfile);
-  
+
         let updatedUser = await UserModel.findOneAndUpdate(
           { emailAddress: emailAddress },
           { $set: { updatedAt: date, profile: newProfile } },
           { new: true }
         );
-  
+
         if (updatedUser) {
           console.log("user updated", updatedUser);
           return res.json({
             status: 200,
             message: "Profile link added successfully",
-            response: {...newProfile, firstName: updatedUser.firstName,lastName: updatedUser.lastName}
+            response: {
+              ...newProfile,
+              firstName: updatedUser.firstName,
+              lastName: updatedUser.lastName
+            }
           });
         } else if (!updatedUser) {
           console.log("Profile link not added ");
@@ -233,15 +247,14 @@ var socialMediaAccount = {
             message: "Profile link not added "
           });
         }
-      }  else if (!resp.profile.emailAddress) {
-          console.log("This profile doesnot exists");
-          return res.json({
-            status: 400,
-            authorization: false,
-            message: "This profile doesnot exists"
-          });
-        } 
-      
+      } else if (!resp.profile.emailAddress) {
+        console.log("This profile doesnot exists");
+        return res.json({
+          status: 400,
+          authorization: false,
+          message: "This profile doesnot exists"
+        });
+      }
     } catch (err) {
       console.log("error while finding user", err);
       return res.json({
@@ -250,33 +263,122 @@ var socialMediaAccount = {
       });
     }
   });
-  
-  router.post("/viewProfile",async function(req, res) {
 
+  router.get("/viewSelfProfile", async function(req, res) {
+    var token = req.headers["token"];
+    let user = await UserModel.findOne({ token: token });
+    console.log("user found", user);
+    if (user) {
+      if (user.profile.emailAddress) {
+        let profileDetails = {
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          ...user.profile
+        };
+        return res.json({
+          status: 200,
+          message: "profile fetched successfully",
+          response: {
+            profileDetails: profileDetails
+          }
+        });
+      } else if (!user.profile.emailAddress) {
+        console.log("This profile doesnot exists");
+        return res.json({
+          status: 400,
+          authorization: false,
+          message: "This profile doesnot exists"
+        });
+      }
+    }
+  });
+
+  router.post("/viewProfile", async function(req, res) {
     let emailAddress = req.body.emailAddress;
-   let resp = await UserModel.findOne({ emailAddress: emailAddress })
-   console.log('resp',resp)
-   if(resp){
+    var viewer = req.headers["token"];
+
+    let resp = await UserModel.findOne({ emailAddress: emailAddress });
+    console.log("resp", resp);
+    if (resp) {
       if (resp.profile.emailAddress) {
         console.log("user found", resp);
+        let viewerDetails = await UserModel.findOne({ token: viewer });
+
+        let followedAccounts = await FollowModel.find({
+          followerId: viewerDetails.id,
+          followId: resp.id
+        });
+
+        console.log("followedAccounts", followedAccounts);
+        var newSocialMedia = [];
+        if (followedAccounts.length >= 1) {
+          newSocialMedia = resp.profile.socialMediaAccount;
+          followedAccounts.map(accnt => {
+            newSocialMedia[accnt.accountType].username = accnt.username;
+            newSocialMedia[accnt.accountType].link =
+              resp.profile.socialMediaAccount[accnt.accountType].link;
+
+            newSocialMedia[accnt.accountType][
+              `linkedTo${accnt.accountType}`
+            ] = true;
+          });
+          console.log("final array", newSocialMedia);
+        } else {
+          newSocialMedia = resp.profile.socialMediaAccount;
+        }
+
         let profileDetails = {
           id: resp._id,
           firstName: resp.firstName,
           lastName: resp.lastName,
-          ...resp.profile
+          age: resp.profile.age,
+          phoneNumber: resp.profile.phoneNumber,
+          emailAddress: resp.profile.emailAddress,
+          address: resp.profile.address,
+          profession: resp.profile.profession,
+          profilePicturePath: resp.profile.profilePicturePath,
+          gender: resp.profile.gender,
+          socialMediaAccount: newSocialMedia,
+          publicAccount: resp.profile.publicAccount,
+          createdAt: resp.profile.createdAt,
+          updatedAt: resp.profile.updatedAt
         };
-        
-           let activityObj = {
-            type: 'view',
-            firstName: resp.firstName,
-            profilePicture: resp.profile.profilePicturePath,
-            address: resp.profile.address,
-            time: moment(date).format('LT'),
-            text: `${resp.firstName} viewed your profile`
-          } 
-      
-   nsp.emit('activity',activityObj) 
-  
+
+        /* var notArray = []; */
+
+        var activityObj = {
+          type: "view",
+          firstName: viewerDetails.firstName,
+          profilePicture: viewerDetails.profile.profilePicturePath,
+          address: viewerDetails.profile.address,
+          time: moment(date).format("LT"),
+          text: `${viewerDetails.firstName} viewed your profile`
+        };
+        notification(resp.id,activityObj)
+      /*   let notification = await ActivityModel.findOne({ userId: resp.id });
+        if (notification) {
+          notification.notifications.push(activityObj);
+          await notification.save();
+          console.log("notification saved");
+        } else {
+          notArray.push(activityObj);
+
+          let notify = new ActivityModel({
+            userId: resp.id,
+            notifications: notArray,
+            createdAt: date,
+            updatedAt: date
+          });
+
+          let result = await notify.save();
+          if (result) {
+            console.log("notification saved");
+          } else {
+            console.log("notification not saved");
+          }
+        } */
+
         return res.json({
           status: 200,
           message: "profile fetched successfully",
@@ -291,39 +393,43 @@ var socialMediaAccount = {
           authorization: false,
           message: "This profile doesnot exists"
         });
-      } 
+      }
     }
   });
-  
+
   router.put("/deleteProfileLink", async function(req, res) {
     var socialmediaaccountId = req.body.socialmediaaccountId;
-    console.log(socialmediaaccountId);
+
     var emailAddress = req.body.emailAddress;
-  
+
     var user = await UserModel.findOne({ emailAddress: emailAddress });
     console.log("user", user);
-  
+
     if (user.profile.emailAddress) {
-      user.profile.socialMediaAccount[socialmediaaccountId].username = ''
-      user.profile.socialMediaAccount[socialmediaaccountId].link = ''
-        user.profile.socialMediaAccount[socialmediaaccountId].linked = false
+      user.profile.socialMediaAccount[socialmediaaccountId].username = "";
+      user.profile.socialMediaAccount[socialmediaaccountId].link = "";
+      user.profile.socialMediaAccount[socialmediaaccountId].linked = false;
       let updatedProfile = {
         ...user.profile,
-        socialMediaAccount: {...user.profile.socialMediaAccount}
+        socialMediaAccount: { ...user.profile.socialMediaAccount }
       };
-  
+
       var update = await UserModel.findOneAndUpdate(
         { emailAddress: emailAddress },
         { $set: { updatedAt: date, profile: updatedProfile } }
       );
-  
+
       if (update) {
         console.log("update", update);
         console.log(`socialMediaAccount ${socialmediaaccountId} deleted`);
         return res.json({
           status: 200,
           message: `socialMediaAccount ${socialmediaaccountId} deleted`,
-          response: {...updatedProfile,firstName: update.firstName, lastName: update.lastName}
+          response: {
+            ...updatedProfile,
+            firstName: update.firstName,
+            lastName: update.lastName
+          }
         });
       } else if (err) {
         console.log(
@@ -345,7 +451,7 @@ var socialMediaAccount = {
       console.log("error in finding user", err);
     }
   });
-  
+
   router.put("/accountPrivacy", async function(req, res) {
     let update = await UserModel.findOneAndUpdate(
       { emailAddress: req.body.emailAddress },
@@ -380,5 +486,5 @@ var socialMediaAccount = {
       });
     }
   });
-  return router
- }; 
+  return router;
+};

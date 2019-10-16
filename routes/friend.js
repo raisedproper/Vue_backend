@@ -6,6 +6,7 @@ var routeAuthentication = require("../middleware/authentication");
 var mongoose = require("mongoose");
 var moment = require("moment");
 var date = new Date();
+var notification = require("../middleware/notification");
 router.use(routeAuthentication);
 
 module.exports = function(socket, nsp) {
@@ -82,7 +83,9 @@ module.exports = function(socket, nsp) {
             text: `${friend1.firstName} wants to connect`,
             time: moment(date).format("LT")
           };
-          nsp.emit("recieve_activity", activityObj);
+         
+          notification(friend2.id,activityObj)
+
           return res.json({
             status: 200,
             message: "friend request sent successfully"
@@ -150,7 +153,7 @@ module.exports = function(socket, nsp) {
               address: connection.profile.address,
               time: moment(date).format("LT")
             };
-            nsp.emit("activity", activityObj);
+           notification(friendId, activityObj)
           }
 
           return res.json({

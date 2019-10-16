@@ -4,7 +4,8 @@ var FollowSchema = new mongoose.Schema({
     status: String,
     token: String,
     accountType: String,
-    username: String,
+    followerUsername: String,
+    followUsername: String,
     createdAt: Date,
     updatedAt: Date
 })

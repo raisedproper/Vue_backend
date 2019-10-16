@@ -3,7 +3,7 @@ var router = express.Router();
 var ConversationModel = require("../models/Conversation");
 var ChatModel = require("../models/Chat");
 var UserModel = require("../models/User");
-
+var notification = require("../middleware/notification");
 var date = new Date();
 var moment = require("moment");
 
@@ -77,7 +77,7 @@ module.exports = {
               time: moment(newMessage.date).format("LT")
             };
 
-            nsp.emit("activity", activityObj);
+            notification(newMessage.recieverId, activityObj);
           }
         }
       }

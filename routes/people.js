@@ -60,7 +60,7 @@ console.log('end',endTime) */
         console.log("get all users");
         let modified_response = [];
         response.map(async obj => {
-          let time = moment(obj.updatedAt).format("LT");
+          let time = moment(obj.updatedAt).format("YYYY-MM-DD HH:mm:ss");
           /* let checkFriends = await PeopleModel.find({
   $or: [{ senderId: userId, recieverId: obj.id}, {senderId: obj.id,recieverId: userId }]
 })
@@ -137,6 +137,7 @@ router.post("/refineSearchPeople", async function(req, res) {
   var gte;
   let filter = {};
   let getUser = await UserModel.findOne({ token: token });
+  console.log('getusers',getUser)
   if (genderFilter && genderFilter !== "All") {
     filter = {
       ...filter,
@@ -153,16 +154,27 @@ router.post("/refineSearchPeople", async function(req, res) {
     };
   }
   if (timeFilter && timeFilter !== "All") {
-    time = moment(date).format("h:mm:ss ");
-    timeFilter = '3:00:00'
-    var duration = moment.duration({hours: 3, minutes: 00, seconds: 00})
-    var sub = moment(time, 'h:mm:ss').subtract(duration).format('LT');
+    var getTime = moment(date).format("YYYY-MM-DD HH:mm:ss");
+    var timeStr = `${timeFilter}:00:00`;
+    timeStr = timeStr.split(":");
 
-    console.log("duration", sub);
-   /*  let hours = moment(sub).format('LT') */
-     filter = {
+    var h = timeStr[0],
+      m = timeStr[1];
+    s = timeStr[2];
+    var newTime = moment(getTime)
+      .subtract({ hours: h, minutes: m, seconds: s })
+      .format("YYYY-MM-DD hh:mm:ss");
+    console.log("newtime", newTime);
+
+      filter = {
       ...filter,
-      "active.time": { $lte: sub }
+      "active.time": { $gte: newTime }
+    };  
+  }
+  if(firstNameFilter){
+    filter = {
+      ...filter,
+      "active.firstName":  firstNameFilter 
     }; 
   }
 
