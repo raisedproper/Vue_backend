@@ -345,40 +345,17 @@ module.exports = function(socket, nsp) {
           updatedAt: resp.profile.updatedAt
         };
 
-        /* var notArray = []; */
-
         var activityObj = {
           type: "view",
           firstName: viewerDetails.firstName,
-          profilePicture: viewerDetails.profile.profilePicturePath,
+          profilePicturePath: viewerDetails.profile.profilePicturePath,
+          emailAddress: viewerDetails.profile.emailAddress,
           address: viewerDetails.profile.address,
           time: moment(date).format("LT"),
-          text: `${viewerDetails.firstName} viewed your profile`
+          text: `${viewerDetails.firstName} viewed your profile`,
+          status: false
         };
         notification(resp.id,activityObj)
-      /*   let notification = await ActivityModel.findOne({ userId: resp.id });
-        if (notification) {
-          notification.notifications.push(activityObj);
-          await notification.save();
-          console.log("notification saved");
-        } else {
-          notArray.push(activityObj);
-
-          let notify = new ActivityModel({
-            userId: resp.id,
-            notifications: notArray,
-            createdAt: date,
-            updatedAt: date
-          });
-
-          let result = await notify.save();
-          if (result) {
-            console.log("notification saved");
-          } else {
-            console.log("notification not saved");
-          }
-        } */
-
         return res.json({
           status: 200,
           message: "profile fetched successfully",

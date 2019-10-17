@@ -3,10 +3,13 @@ var router = express.Router();
 var date = new Date();
 var UserModel = require("../models/User");
 var ActivityModel = require("../models/Activity");
+var PeopleModel = require("../models/People");
 var ConversationModel = require("../models/Conversation");
+var ConnectionModel = require("../models/Connection");
 var moment = require("moment");
 var routeAuthentication = require("../middleware/authentication");
-var soc = require('./socket')
+var soc = require("./socket");
+var mongoose = require("mongoose");
 router.use(routeAuthentication);
 
 router.get("/connections/:id", async (req, res) => {
@@ -27,19 +30,46 @@ router.get("/connections/:id", async (req, res) => {
       moment(b.updatedAt).format("MMM Do YY");
   });
 
-  user.friends.map(friend => {
+  user.friends.map(async friend => {
     console.log("friend", friend);
-    let date = moment(friend.updatedAt).format("MMM Do YY");
+
+    let time = moment(friend.updatedAt).format("YYYY-MM-DD HH:mm:ss");
     let obj = {
       id: friend.friend._id,
       profilePicture: friend.friend.profile.profilePicturePath,
       firstName: friend.friend.firstName,
       emailAddress: friend.friend.emailAddress,
+      age:  friend.friend.profile.age,
+      gender: friend.friend.profile.gender,
       address: friend.friend.profile.address,
-      date: date
+      time: time,
     };
     friendss.push(obj);
   });
+
+  let saveConnection = await ConnectionModel.findOne({ userId: id });
+  console.log('save',saveConnection) 
+  if (saveConnection) {
+    let update = await ConnectionModel.findOneAndUpdate(
+      { userId: id },
+      { $set: { active: friendss } }
+    );
+    if (update) {
+      console.log("connections updated successfully");
+    }
+  } else {
+    let obj = new ConnectionModel({
+      userId: id,
+      active: friendss,
+      createdAt: date,
+      updatedAt: date
+    });
+
+    let save = await obj.save();
+    if (save) {
+      console.log("connections saved successfully");
+    }
+  } 
 
   res.json({
     status: 200,
@@ -100,12 +130,10 @@ router.get("/inbox/:id", async function(req, res) {
         Sender == true
           ? person.recieverId.profile.profilePicturePath
           : person.senderId.profile.profilePicturePath,
-          lastName:
+      lastName:
+        Sender == true ? person.recieverId.lastName : person.senderId.lastName,
+      address:
         Sender == true
-          ? person.recieverId.lastName
-          : person.senderId.lastName,
-          address:   
-          Sender == true
           ? person.recieverId.profile.address
           : person.senderId.profile.address,
       message: person.chats[0].messageBody,
@@ -127,29 +155,39 @@ router.get("/inbox/:id", async function(req, res) {
   }
 });
 
-router.get('/notifications/:id',async function(req,res){
+router.get("/notifications/:id", async function(req, res) {
   var { id } = req.params;
 
-let activity = await ActivityModel.findOne({userId: id})
+  let activity = await ActivityModel.findOne({ userId: id });
 
-if(activity){
-  res.send({
-    status: 200,
-    message: 'notifications fetched successfully',
-    response: activity.notifications
-  })
-} else {
-  res.send({
-    status: 400,
-    message: 'no notifications',
-  })
-}
-})
+  if (activity) {
+    let readNotifications = await ActivityModel.updateMany(
+      {
+        userId: id
+      },
+      { $set: { "notifications.$[].status": true, updatedAt: date } }
+    );
+    if (readNotifications) {
+      console.log("user read notifications");
+    } else {
+      console.log("error reading notifications");
+    }
 
-router.get('/count/:id',async function(req,res){
+    res.send({
+      status: 200,
+      message: "notifications fetched successfully",
+      response: activity.notifications
+    });
+  } else {
+    res.send({
+      status: 400,
+      message: "no notifications"
+    });
+  }
+});
+
+router.get("/count/:id", async function(req, res) {
   var { id } = req.params;
-
-
-})
+});
 
 module.exports = router;

@@ -2,6 +2,7 @@ var express = require("express");
 var router = express.Router();
 var UserModel = require("../models/User");
 var ActiveModel = require("../models/Active");
+var ConnectionModel = require("../models/Connection");
 var routeAuthentication = require("../middleware/authentication");
 
 router.use(routeAuthentication);
@@ -29,6 +30,7 @@ router.post("/getSurroundingPeople", async function(req, res) {
   );
   if (updatedUser) {
     userId = updatedUser.id;
+    console.log("userId", userId);
     console.log("location of user updated");
   } else {
     console.log("location of user not updated");
@@ -88,8 +90,8 @@ console.log('check if friends',checkFriends) */
         });
 
         if (modified_response) {
-          let activeConnection = await ActiveModel.findById(userId);
-          console.log("active", activeConnection);
+          let activeConnection = await ActiveModel.findOne({ userId: userId });
+
           if (activeConnection) {
             let updatedConnection = await ActiveModel.findOneAndUpdate(
               { id: userId },
@@ -129,15 +131,10 @@ console.log('check if friends',checkFriends) */
   );
 });
 
-router.post("/refineSearchPeople", async function(req, res) {
-  var token = req.headers["token"];
-  var { ageFilter, genderFilter, timeFilter, firstNameFilter } = req.body;
-
+function Filters(ageFilter, genderFilter, timeFilter, firstNameFilter) {
+  let filter = {};
   var lte;
   var gte;
-  let filter = {};
-  let getUser = await UserModel.findOne({ token: token });
-  console.log('getusers',getUser)
   if (genderFilter && genderFilter !== "All") {
     filter = {
       ...filter,
@@ -166,26 +163,66 @@ router.post("/refineSearchPeople", async function(req, res) {
       .format("YYYY-MM-DD hh:mm:ss");
     console.log("newtime", newTime);
 
-      filter = {
-      ...filter,
-      "active.time": { $gte: newTime }
-    };  
-  }
-  if(firstNameFilter){
     filter = {
       ...filter,
-      "active.firstName":  firstNameFilter 
-    }; 
+      "active.time": { $gte: newTime }
+    };
   }
+  if (firstNameFilter) {
+    filter = {
+      ...filter,
+      "active.firstName": firstNameFilter.toLowerCase()
+    };
+  }
+  return filter;
+}
 
-  console.log("filter", filter);
+router.post("/refineSearchPeople", async function(req, res) {
+  var token = req.headers["token"];
+  var { ageFilter, genderFilter, timeFilter, firstNameFilter } = req.body;
+
+  var getUser = await UserModel.findOne({ token: token });
+  let search = Filters(ageFilter, genderFilter, timeFilter, firstNameFilter);
+
   let connections = await ActiveModel.aggregate([
     { $match: { userId: getUser.id } },
     { $unwind: "$active" },
-    { $match: filter }
+    { $match: search }
   ]);
 
-  res.send(connections);
+  let modified_result = []
+  connections.map(obj => { modified_result.push(obj.active) })
+
+  res.json({
+    status: 200,
+    message: "users fetched successfully",
+    response: modified_result
+  });
+});
+
+router.post("/refineConnectPeople/:id", async function(req, res) {
+  var token = req.headers["token"];
+  var { ageFilter, genderFilter, timeFilter, firstNameFilter } = req.body;
+  var { id } = req.params;
+
+  let search = Filters(ageFilter, genderFilter, timeFilter, firstNameFilter);
+
+  let filterConenctions = await ConnectionModel.aggregate([
+    { $match: { userId: id } },
+    { $unwind: "$active" },
+    { $match: search }
+  ]);
+  
+  let modified_response = []
+ filterConenctions.map(obj => {
+  modified_response.push(obj.active)
+})
+
+  res.json({
+    status: 200,
+    message: "users fetched successfully",
+    response: modified_response
+  })
 });
 
 module.exports = router;

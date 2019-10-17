@@ -7,6 +7,7 @@ var mongoose = require("mongoose");
 var moment = require("moment");
 var date = new Date();
 var notification = require("../middleware/notification");
+var ActivityModel = require("../models/Activity");
 router.use(routeAuthentication);
 
 module.exports = function(socket, nsp) {
@@ -78,13 +79,16 @@ module.exports = function(socket, nsp) {
           let activityObj = {
             firstName: friend1.firstName,
             profilePicturePath: friend1.profile.profilePicturePath,
+            emailAddress: friend1.profile.emailAddress,
             address: friend1.profile.address,
             type: "friendRequest",
             text: `${friend1.firstName} wants to connect`,
-            time: moment(date).format("LT")
+            time: moment(date).format("LT"),
+            id: friend1.id,
+            status: false
           };
-         
-          notification(friend2.id,activityObj)
+
+          notification(friend2.id, activityObj);
 
           return res.json({
             status: 200,
@@ -142,18 +146,28 @@ module.exports = function(socket, nsp) {
 
         if (update.nModified != 0 && update2.nModified != 0) {
           console.log("friend request accepted", response);
-
           let connection = await UserModel.findById(userId);
+          let getNotification = ActivityModel.findOneAndRemove({
+            user: userId,
+            "notifications.emailAddress": friendId.emailAddress,
+            "notifications.type": "friendRequest"
+          });
+
+          if (getNotification) {
+            console.log("notification removed");
+          }
+
           if (connection) {
             let activityObj = {
               firstName: connection.firstName,
               profilePicturePath: connection.profile.profilePicturePath,
+              emailAddress: connection.profile.emailAddress,
               type: "connection",
               text: `${connection.firstName} accepted connection`,
               address: connection.profile.address,
               time: moment(date).format("LT")
             };
-           notification(friendId, activityObj)
+            notification(friendId, activityObj);
           }
 
           return res.json({
@@ -189,7 +203,7 @@ module.exports = function(socket, nsp) {
     var token = req.headers["token"];
 
     let user = await UserModel.findOne({ token: token });
-
+    let friend = await UserModel.findOne({ id: friendId });
     if (user) {
       let response = await PeopleModel.findOneAndRemove({
         user: user.id,
@@ -217,6 +231,16 @@ module.exports = function(socket, nsp) {
 
         if (response.status == "approved" && response2.status == "approved") {
           if (update1.emailAddress && update2.emailAddress) {
+            let getNotification = ActivityModel.findOneAndRemove({
+              userId: user.id,
+              "notifications.emailAddress": friend.emailAddress,
+              "notifications.type": "friendRequest"
+            });
+
+            if (getNotification) {
+              console.log("notification removed");
+            }
+
             console.log("friend connections removed");
             return res.json({
               status: 200,

@@ -73,8 +73,10 @@ module.exports = {
               text: `${sender.firstName} sends you a message`,
               type: "message",
               address: `${sender.profile.address}`,
-              profilePicture: `${sender.profile.profilePicturePath}`,
-              time: moment(newMessage.date).format("LT")
+              emailAddress: sender.profile.emailAddress,
+              profilePicturePath: `${sender.profile.profilePicturePath}`,
+              time: moment(newMessage.date).format("LT"),
+              status: false
             };
 
             notification(newMessage.recieverId, activityObj);

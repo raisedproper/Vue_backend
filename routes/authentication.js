@@ -84,8 +84,8 @@ router.post("/register", function(req, res) {
       var token = jwt.sign({emailAddress: emailAddress}, config.Secret)
 
       var User = new UserModel({
-        firstName: firstName,
-        lastName: lastName,
+        firstName: firstName.toLowerCase(),
+        lastName: lastName.toLowerCase(),
         emailAddress: emailAddress,
         password: hash,
         token: token,
