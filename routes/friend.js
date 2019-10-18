@@ -8,6 +8,8 @@ var moment = require("moment");
 var date = new Date();
 var notification = require("../middleware/notification");
 var ActivityModel = require("../models/Activity");
+var ConnectionModel = require("../models/Connection");
+
 router.use(routeAuthentication);
 
 module.exports = function(socket, nsp) {
@@ -149,13 +151,15 @@ module.exports = function(socket, nsp) {
           let connection = await UserModel.findById(userId);
           let getFriend = await UserModel.findById(friendId);
           console.log("email", getFriend.emailAddress);
-       
+
           let getNotification = await ActivityModel.findOneAndUpdate(
             { userId: userId },
             {
               $pull: {
-                notifications:{emailAddress: getFriend.emailAddress,
-                type: "friendRequest"}
+                notifications: {
+                  emailAddress: getFriend.emailAddress,
+                  type: "friendRequest"
+                }
               }
             },
             { new: true }
@@ -240,22 +244,16 @@ module.exports = function(socket, nsp) {
 
         if (response.status == "approved" && response2.status == "approved") {
           if (update1.emailAddress && update2.emailAddress) {
-            console.log('email',friend.emailAddress)
-            let getNotification = await ActivityModel.findOneAndUpdate(
+            let remove = await ConnectionModel.findOneAndUpdate(
               { userId: user.id },
               {
                 $pull: {
-                  notifications:{emailAddress: friend.emailAddress,
-                  type: "friendRequest"}
+                  active: { emailAddress: update2.emailAddress }
                 }
               },
-                { new: true }
+              { new: true }
             );
-
-            if (getNotification) {
-              console.log("notification removed");
-            }
-
+            console.log("connection removed");
             console.log("friend connections removed");
             return res.json({
               status: 200,
@@ -273,17 +271,18 @@ module.exports = function(socket, nsp) {
           response2.status == "pending"
         ) {
           if (update1.emailAddress && update2.emailAddress) {
-
-            console.log('email',update2.emailAddress)
+            console.log("email", update2.emailAddress);
             let getNotification = await ActivityModel.findOneAndUpdate(
               { userId: user.id },
               {
                 $pull: {
-                  notifications:{emailAddress: update2.emailAddress,
-                  type: "friendRequest"}
+                  notifications: {
+                    emailAddress: update2.emailAddress,
+                    type: "friendRequest"
+                  }
                 }
               },
-                { new: true }
+              { new: true }
             );
 
             if (getNotification) {

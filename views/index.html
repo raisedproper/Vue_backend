@@ -4,14 +4,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
     <script>
       const socket = io("http://localhost:3002/chat");
-     socket.emit('send_message',{"senderId": "5da6f9f17dac01572c919887",
+     /* socket.emit('send_message',{"senderId": "5da6f9f17dac01572c919887",
       "recieverId": "5da6f85b562ee750a3b018cb", "message":"hello"})  
       socket.on('recieve_message', function(msg){
         console.log('recieve_message',msg)
       }); 
        socket.on('activity', function(act){
         console.log('activity',act)
-      }); 
+      }); */
+      socket.emit('count','5da6f85b562ee750a3b018cb')
+      socket.on('count',(val) => { console.log(val) })
     </script>
   </body>
 </html>

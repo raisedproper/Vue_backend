@@ -9,15 +9,10 @@ router.use(routeAuthentication);
 var date = new Date();
 var moment = require("moment");
 
-var kmToRadian = function(km) {
-  var earthRadiusInkm = 6371;
-  return km / earthRadiusInkm;
-};
-
 router.post("/getSurroundingPeople", async function(req, res) {
   var token = req.headers["token"];
   UserModel.createIndexes();
-  var { currentlocation, startTime, endTime } = req.body;
+  var { currentlocation, startTime } = req.body;
   let location = {
     coordinates: currentlocation,
     type: "Point"
@@ -37,12 +32,7 @@ router.post("/getSurroundingPeople", async function(req, res) {
   }
 
   let radius = 91.44;
-  /* console.log('start',startTime)
-console.log('end',endTime) */
-  /* startTime = moment(startTime).format('LT') */
-  /* console.log('startTime',startTime) */
-  /* endTime = moment(endTime).format('LT') */
-  /* console.log('endTime',endTime) */
+   startTime = moment(startTime).format('YYYY-MM-DD HH:mm:ss') 
   UserModel.find(
     {
       location: {
@@ -54,20 +44,27 @@ console.log('end',endTime) */
           $maxDistance: radius
         }
       },
-      token: { $not: { $eq: token } }
-      /* "updatedAt": {$gte: startTime, $lt: endTime}  */
+      token: { $not: { $eq: token } },
+     "updatedAt": {$lte: startTime} 
     },
     async function(err, response) {
       if (response) {
-        console.log("get all users");
         let modified_response = [];
+        let alreadyFriend = false;
+
+        let checkFriends = await ConnectionModel.findOne({ userId: userId });
+
         response.map(async obj => {
           let time = moment(obj.updatedAt).format("YYYY-MM-DD HH:mm:ss");
-          /* let checkFriends = await PeopleModel.find({
-  $or: [{ senderId: userId, recieverId: obj.id}, {senderId: obj.id,recieverId: userId }]
-})
-console.log('check if friends',checkFriends) */
+          let check = checkFriends.active
+            .map(a => a.emailAddress)
+            .includes(obj.emailAddress);
 
+          if (check) {
+            alreadyFriend = true;
+          } else {
+            alreadyFriend = false;
+          }
           let new_obj = {
             firstName: obj.firstName,
             lastName: obj.lastName,
@@ -78,7 +75,8 @@ console.log('check if friends',checkFriends) */
             id: obj._id,
             emailAddress: obj.emailAddress,
             address: obj.profile.address,
-            publicAccount: obj.profile.publicAccount,
+            publicAccount:
+              alreadyFriend == true ? true : obj.profile.publicAccount,
             profilePicture: obj.profile.profilePicturePath,
             gender: obj.profile.gender,
             age: obj.profile.age,
@@ -183,15 +181,17 @@ router.post("/refineSearchPeople", async function(req, res) {
 
   var getUser = await UserModel.findOne({ token: token });
   let search = Filters(ageFilter, genderFilter, timeFilter, firstNameFilter);
-
+  console.log(search);
   let connections = await ActiveModel.aggregate([
     { $match: { userId: getUser.id } },
     { $unwind: "$active" },
     { $match: search }
   ]);
 
-  let modified_result = []
-  connections.map(obj => { modified_result.push(obj.active) })
+  let modified_result = [];
+  connections.map(obj => {
+    modified_result.push(obj.active);
+  });
 
   res.json({
     status: 200,
@@ -201,7 +201,6 @@ router.post("/refineSearchPeople", async function(req, res) {
 });
 
 router.post("/refineConnectPeople/:id", async function(req, res) {
-  var token = req.headers["token"];
   var { ageFilter, genderFilter, timeFilter, firstNameFilter } = req.body;
   var { id } = req.params;
 
@@ -212,17 +211,17 @@ router.post("/refineConnectPeople/:id", async function(req, res) {
     { $unwind: "$active" },
     { $match: search }
   ]);
-  
-  let modified_response = []
- filterConenctions.map(obj => {
-  modified_response.push(obj.active)
-})
+
+  let modified_response = [];
+  filterConenctions.map(obj => {
+    modified_response.push(obj.active);
+  });
 
   res.json({
     status: 200,
     message: "users fetched successfully",
     response: modified_response
-  })
+  });
 });
 
 module.exports = router;

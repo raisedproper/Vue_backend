@@ -1,8 +1,11 @@
 var express = require("express");
 var router = express.Router();
 var ConversationModel = require("../models/Conversation");
+var ConnectionModel = require("../models/Connection");
 var ChatModel = require("../models/Chat");
 var UserModel = require("../models/User");
+var ActivityModel = require("../models/Activity");
+var InboxModel = require("../models/Inbox")
 var notification = require("../middleware/notification");
 var date = new Date();
 var moment = require("moment");
@@ -84,6 +87,12 @@ module.exports = {
         }
       }
     });
+
+    soc.on("count", async(id) => {
+     let count = await getCount(id);
+     console.log(count)
+     nsp.emit('count',count)
+    });
   }
 };
 
@@ -114,4 +123,34 @@ async function createMessage(obj) {
     console.log("error saving message");
     return { status: 400, message: "message sending unsuccessfull" };
   }
+}
+
+async function getCount(id) {
+  console.log(id);
+
+  let notification = await ActivityModel.aggregate([
+    { $match: { userId: id } },
+    { $unwind: "$notifications" },
+    { $match: {'notifications.status': false} }
+  ]);
+  
+ let notificationCount = notification.length;
+
+ let connection = await ConnectionModel.aggregate([
+  { $match: { userId: id } },
+  { $unwind: "$active" },
+  { $match: {'active.seen': false} }
+]);
+
+let connectionCount = connection.length;
+
+let inbox =  await InboxModel.aggregate([
+  { $match: { userId: id } },
+  { $unwind: "$chats" },
+  { $match: {'chats.readMessage': false} }
+]); 
+
+let inboxCount = inbox.length;
+let totalCount = notificationCount + connectionCount + inboxCount
+return totalCount
 }
