@@ -147,12 +147,20 @@ module.exports = function(socket, nsp) {
         if (update.nModified != 0 && update2.nModified != 0) {
           console.log("friend request accepted", response);
           let connection = await UserModel.findById(userId);
-          let getNotification = ActivityModel.findOneAndRemove({
-            user: userId,
-            "notifications.emailAddress": friendId.emailAddress,
-            "notifications.type": "friendRequest"
-          });
-
+          let getFriend = await UserModel.findById(friendId);
+          console.log("email", getFriend.emailAddress);
+       
+          let getNotification = await ActivityModel.findOneAndUpdate(
+            { userId: userId },
+            {
+              $pull: {
+                notifications:{emailAddress: getFriend.emailAddress,
+                type: "friendRequest"}
+              }
+            },
+            { new: true }
+          );
+          console.log("getNotification", getNotification);
           if (getNotification) {
             console.log("notification removed");
           }
@@ -172,7 +180,8 @@ module.exports = function(socket, nsp) {
 
           return res.json({
             status: 200,
-            message: "friend request accepted"
+            message: "friend request accepted",
+            respone: getNotification.notifications
           });
         } else {
           res.json({
@@ -231,11 +240,17 @@ module.exports = function(socket, nsp) {
 
         if (response.status == "approved" && response2.status == "approved") {
           if (update1.emailAddress && update2.emailAddress) {
-            let getNotification = ActivityModel.findOneAndRemove({
-              userId: user.id,
-              "notifications.emailAddress": friend.emailAddress,
-              "notifications.type": "friendRequest"
-            });
+            console.log('email',friend.emailAddress)
+            let getNotification = await ActivityModel.findOneAndUpdate(
+              { userId: user.id },
+              {
+                $pull: {
+                  notifications:{emailAddress: friend.emailAddress,
+                  type: "friendRequest"}
+                }
+              },
+                { new: true }
+            );
 
             if (getNotification) {
               console.log("notification removed");
@@ -258,10 +273,28 @@ module.exports = function(socket, nsp) {
           response2.status == "pending"
         ) {
           if (update1.emailAddress && update2.emailAddress) {
+
+            console.log('email',update2.emailAddress)
+            let getNotification = await ActivityModel.findOneAndUpdate(
+              { userId: user.id },
+              {
+                $pull: {
+                  notifications:{emailAddress: update2.emailAddress,
+                  type: "friendRequest"}
+                }
+              },
+                { new: true }
+            );
+
+            if (getNotification) {
+              console.log("notification removed");
+            }
+
             console.log("friend request rejected successfully");
             return res.json({
               status: 200,
-              message: "friend request rejected successfully"
+              message: "friend request rejected successfully",
+              response: getNotification.notifications
             });
           } else {
             console.log("friend request not rejected");

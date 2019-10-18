@@ -173,13 +173,13 @@ router.get("/notifications/:id", async function(req, res) {
       console.log("error reading notifications");
     }
 
-    res.send({
+    res.json({
       status: 200,
       message: "notifications fetched successfully",
       response: activity.notifications
     });
   } else {
-    res.send({
+    res.json({
       status: 400,
       message: "no notifications"
     });

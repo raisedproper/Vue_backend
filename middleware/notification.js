@@ -4,6 +4,7 @@ var moment = require("moment");
 
 module.exports = async function(id, activityObj) {
   let notification = await ActivityModel.findOne({ userId: id });
+  console.log('notification',notification)
   var notArray = [];
   var multipleView = false
   if (notification) {
