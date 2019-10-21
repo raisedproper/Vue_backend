@@ -1,9 +1,7 @@
 var express = require("express");
 var router = express.Router();
-var ConversationModel = require("../models/Conversation");
 var ChatModel = require("../models/Chat");
 var routeAuthentication = require("../middleware/authentication");
-var moment = require("moment");
 var date = new Date();
 
 router.use(routeAuthentication);

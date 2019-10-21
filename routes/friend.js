@@ -89,7 +89,7 @@ module.exports = function(socket, nsp) {
             id: friend1.id,
             status: false
           };
-
+console.log(activityObj)
           notification(friend2.id, activityObj);
 
           return res.json({
@@ -182,10 +182,13 @@ module.exports = function(socket, nsp) {
             notification(friendId, activityObj);
           }
 
+          let adduserFriend = await getFriends(userId);
+          let addfriendUser = await getFriends(friendId);
+          console.log(adduserFriend)
           return res.json({
             status: 200,
             message: "friend request accepted",
-            respone: getNotification.notifications
+            respone: getNotification
           });
         } else {
           res.json({
@@ -253,6 +256,19 @@ module.exports = function(socket, nsp) {
               },
               { new: true }
             );
+            let remove2 = await ConnectionModel.findOneAndUpdate(
+              { userId: friendId },
+              {
+                $pull: {
+                  active: { emailAddress: update1.emailAddress }
+                }
+              },
+              { new: true }
+            );
+
+
+
+
             console.log("connection removed");
             console.log("friend connections removed");
             return res.json({
@@ -312,6 +328,80 @@ module.exports = function(socket, nsp) {
       });
     }
   });
+
+  async function getFriends(id) {
+    var friendExists;
+    friendExists = false;
+    let user = await UserModel.findOne({ _id: id }).populate({
+      path: "friends",
+      match: { status: "approved" },
+      populate: {
+        path: "friend",
+        model: "User"
+      }
+    });
+    let friendss = [];
+
+    user.friends.sort((a, b) => {
+      moment(a.updatedAt).format("MMM Do YY") -
+        moment(b.updatedAt).format("MMM Do YY");
+    });
+
+    let saveConnection = await ConnectionModel.findOne({ userId: id });
+
+    user.friends.map(async friend => {
+      console.log("friend address", friend.friend.emailAddress);
+
+      if (saveConnection) {
+        let check = saveConnection.active
+          .map(saved => saved.emailAddress)
+          .includes(friend.friend.emailAddress);
+        if (check == true) {
+          friendExists = true;
+        } else {
+          friendExists = false;
+        }
+      }
+      let time = moment(friend.updatedAt).format("YYYY-MM-DD HH:mm:ss");
+      let obj = {
+        id: friend.friend._id,
+        profilePicture: friend.friend.profile.profilePicturePath,
+        firstName: friend.friend.firstName,
+        emailAddress: friend.friend.emailAddress,
+        age: friend.friend.profile.age,
+        gender: friend.friend.profile.gender,
+        address: friend.friend.profile.address,
+        seen: friendExists,
+        time: time
+      };
+      friendss.push(obj);
+    });
+
+    console.log("save", saveConnection);
+    if (saveConnection) {
+      let update = await ConnectionModel.findOneAndUpdate(
+        { userId: id },
+        { $set: { active: friendss } }
+      );
+      if (update) {
+        console.log("connections updated successfully");
+      }
+    } else {
+      let obj = new ConnectionModel({
+        userId: id,
+        active: friendss,
+        createdAt: date,
+        updatedAt: date
+      });
+
+      let save = await obj.save();
+      
+      if (save) {
+        console.log("connections saved successfully");
+      }
+      return save
+    }
+  }
 
   return router;
 };

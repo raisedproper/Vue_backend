@@ -8,7 +8,6 @@ var routeAuthentication = require("../middleware/authentication");
 var moment = require("moment");
 var notification = require("../middleware/notification");
 var socialMediaAccount = [];
-var ids = [];
 
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -315,7 +314,8 @@ module.exports = function(socket, nsp) {
         if (followedAccounts.length >= 1) {
           newSocialMedia = resp.profile.socialMediaAccount;
           followedAccounts.map(accnt => {
-            newSocialMedia[accnt.accountType].username = accnt.username;
+            newSocialMedia[accnt.accountType].username =
+              resp.profile.socialMediaAccount[accnt.accountType].username;
             newSocialMedia[accnt.accountType].link =
               resp.profile.socialMediaAccount[accnt.accountType].link;
 
@@ -355,7 +355,7 @@ module.exports = function(socket, nsp) {
           text: `${viewerDetails.firstName} viewed your profile`,
           status: false
         };
-        notification(resp.id,activityObj)
+        notification(resp.id, activityObj);
         return res.json({
           status: 200,
           message: "profile fetched successfully",

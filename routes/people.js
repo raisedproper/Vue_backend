@@ -54,17 +54,20 @@ router.post("/getSurroundingPeople", async function(req, res) {
 
         let checkFriends = await ConnectionModel.findOne({ userId: userId });
 
+      
         response.map(async obj => {
           let time = moment(obj.updatedAt).format("YYYY-MM-DD HH:mm:ss");
-          let check = checkFriends.active
+          if(checkFriends){
+          var check = checkFriends.active
             .map(a => a.emailAddress)
             .includes(obj.emailAddress);
-
+          }
           if (check) {
             alreadyFriend = true;
           } else {
             alreadyFriend = false;
           }
+          console.log('alreadyFriend',alreadyFriend)
           let new_obj = {
             firstName: obj.firstName,
             lastName: obj.lastName,

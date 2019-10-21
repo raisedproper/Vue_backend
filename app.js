@@ -13,6 +13,7 @@ const nsp = io.of('/chat')
 
 nsp.on("connection", function(socket) {
   console.log('socket connected')
+
  soc = socket;
  require('./routes/socket').start(soc,nsp);
 }) 

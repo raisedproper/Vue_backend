@@ -8,92 +8,24 @@ var ConversationModel = require("../models/Conversation");
 var ConnectionModel = require("../models/Connection");
 var moment = require("moment");
 var routeAuthentication = require("../middleware/authentication");
-var soc = require("./socket");
-
 router.use(routeAuthentication);
 
 router.get("/connections/:id", async (req, res) => {
   var { id } = req.params;
-  var friendExists;
-  friendExists = false;
-  let user = await UserModel.findOne({ _id: id }).populate({
-    path: "friends",
-    match: { status: "approved" },
-    populate: {
-      path: "friend",
-      model: "User"
-    }
-  });
-  let friendss = [];
+ let friendss = await ConnectionModel.findOne({userId: id});
 
-  user.friends.sort((a, b) => {
-    moment(a.updatedAt).format("MMM Do YY") -
-      moment(b.updatedAt).format("MMM Do YY");
-  });
-  let saveConnection = await ConnectionModel.findOne({ userId: id });
-  user.friends.map(async friend => {
-    console.log("friend address", friend.friend.emailAddress);
-
-    if (saveConnection) {
-
-      let check = saveConnection.active
-        .map(saved => saved.emailAddress)
-        .includes(friend.friend.emailAddress);
-      if (check == true) {
-        friendExists = true;
-      } else {
-        friendExists = false;
-      }
-    }
-    let time = moment(friend.updatedAt).format("YYYY-MM-DD HH:mm:ss");
-    let obj = {
-      id: friend.friend._id,
-      profilePicture: friend.friend.profile.profilePicturePath,
-      firstName: friend.friend.firstName,
-      emailAddress: friend.friend.emailAddress,
-      age: friend.friend.profile.age,
-      gender: friend.friend.profile.gender,
-      address: friend.friend.profile.address,
-      seen: friendExists,
-      time: time
-    };
-    friendss.push(obj);
-  });
-
-  console.log("save", saveConnection);
-  if (saveConnection) {
-    let update = await ConnectionModel.findOneAndUpdate(
-      { userId: id },
-      { $set: { active: friendss } }
-    );
-    if (update) {
-      console.log("connections updated successfully");
-    }
-  } else {
-    let obj = new ConnectionModel({
-      userId: id,
-      active: friendss,
-      createdAt: date,
-      updatedAt: date
-    });
-
-    let save = await obj.save();
-    if (save) {
-      console.log("connections saved successfully");
-    }
-  }
 
   res.json({
     status: 200,
     message: "connections fetched sucessfully",
-    response: friendss
+    response: friendss.active
   });
 });
 
 router.get("/inbox/:id", async function(req, res) {
   var { id } = req.params;
 
-   var AllChats = [];
+  var AllChats = [];
   var sentBySender;
   var Sender;
   const conversations = await ConversationModel.find({
@@ -153,24 +85,31 @@ router.get("/inbox/:id", async function(req, res) {
       readMessage: person.chats[0].readMessage,
       sentBysender: sentBySender
     });
-  }); 
+  });
   if (AllChats) {
+    let checkInbox = await InboxModel.findOne({ userId: id });
+    if (checkInbox) {
+      let updateIndex = InboxModel.findOneAndUpdate(
+        { userId: id },
+        { $set: { chats: AllChats } },
+        { new: true }
+      );
+      if (updateIndex) {
+        console.log("chats updated");
+      }
+    } else {
+      var createInbox = new InboxModel({
+        userId: id,
+        chats: AllChats,
+        createdAt: date,
+        updatedAt: date
+      });
 
-let checkInbox = await InboxModel.findOne({userId: id})
-if(checkInbox){
-let updateIndex = InboxModel.findOneAndUpdate({userId: id},{ $set: {'chats': AllChats }},{new: true} )
-if(updateIndex) { console.log('chats updated')}
-} else {
-  var createInbox = new InboxModel({
-    userId : id,
-    chats: AllChats,
-    createdAt: date,
-    updatedAt: date
-  })
-
- let saveInbox = await createInbox.save()
- if(saveInbox) { console.log('inbox saved') }
-}
+      let saveInbox = await createInbox.save();
+      if (saveInbox) {
+        console.log("inbox saved");
+      }
+    }
 
     res.json({
       status: 200,
@@ -215,8 +154,6 @@ router.get("/notifications/:id", async function(req, res) {
       message: "no notifications"
     });
   }
-
 });
-
 
 module.exports = router;

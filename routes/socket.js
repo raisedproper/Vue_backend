@@ -1,5 +1,4 @@
 var express = require("express");
-var router = express.Router();
 var ConversationModel = require("../models/Conversation");
 var ConnectionModel = require("../models/Connection");
 var ChatModel = require("../models/Chat");
@@ -12,7 +11,9 @@ var moment = require("moment");
 
 module.exports = {
   start: function(soc, nsp) {
-    soc.on("send_message", async function(msg) {
+    console.log('hgj')
+    soc.on("send_message", async(msg) => {
+      console.log('here sokcet')
       var conversationId;
       if (msg.recieverId) {
         let existingConversation = await ConversationModel.findOne({
