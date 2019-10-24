@@ -17,21 +17,21 @@ router.post("/getSurroundingPeople", async function(req, res) {
     type: "Point"
   };
   var userId;
- let updatedUser = await UserModel.findOneAndUpdate(
+  let updatedUser = await UserModel.findOneAndUpdate(
     { token: token },
     { $set: { location: location, updatedAt: new Date() } },
     { new: true }
-  ); 
+  );
   if (updatedUser) {
     userId = updatedUser.id;
-    console.log('12',updatedUser);
+    console.log("12", updatedUser);
     console.log("location of user updated");
   } else {
     console.log("location of user not updated");
   }
 
   let radius = 91.44;
-   startTime = moment(startTime).format('YYYY-MM-DD HH:mm:ss') 
+  startTime = moment(startTime).format("YYYY-MM-DD HH:mm:ss");
   UserModel.find(
     {
       location: {
@@ -44,7 +44,7 @@ router.post("/getSurroundingPeople", async function(req, res) {
         }
       },
       token: { $not: { $eq: token } },
-     "updatedAt": {$lte: startTime} 
+      updatedAt: { $lte: startTime }
     },
     async function(err, response) {
       if (response) {
@@ -54,21 +54,21 @@ router.post("/getSurroundingPeople", async function(req, res) {
         let checkFriends = await ConnectionModel.findOne({ userId: userId });
 
         response.map(async obj => {
-          console.log('obj',obj.updatedAt,'prof',obj.profile.updatedAt)
+          console.log("obj", obj.updatedAt, "prof", obj.profile.updatedAt);
           let time = moment(obj.updatedAt).format("YYYY-MM-DD HH:mm:ss");
-          console.log('time',time)
-          console.log('compare')
-          if(checkFriends){
-          var check = checkFriends.active
-            .map(a => a.emailAddress)
-            .includes(obj.emailAddress);
+          console.log("time", time);
+          console.log("compare");
+          if (checkFriends) {
+            var check = checkFriends.active
+              .map(a => a.emailAddress)
+              .includes(obj.emailAddress);
           }
           if (check) {
             alreadyFriend = true;
           } else {
             alreadyFriend = false;
           }
-          console.log('alreadyFriend',alreadyFriend)
+          console.log("alreadyFriend", alreadyFriend);
           let new_obj = {
             firstName: obj.firstName,
             lastName: obj.lastName,
@@ -95,7 +95,7 @@ router.post("/getSurroundingPeople", async function(req, res) {
           let activeConnection = await ActiveModel.findOne({ userId: userId });
 
           if (activeConnection) {
-            console.log('sffs',modified_response)
+            console.log("sffs", modified_response);
             let updatedConnection = await ActiveModel.findOneAndUpdate(
               { userId: userId },
               {
@@ -156,7 +156,7 @@ function Filters(ageFilter, genderFilter, timeFilter, firstNameFilter) {
   if (timeFilter && timeFilter !== "All") {
     var timeStr = `${timeFilter}:00:00`;
     timeStr = timeStr.split(":");
-
+    var getTime = moment(new Date()).format("YYYY-MM-DD HH:mm:ss");
     var h = timeStr[0],
       m = timeStr[1];
     s = timeStr[2];

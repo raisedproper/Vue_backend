@@ -176,7 +176,8 @@ module.exports = function(socket, nsp) {
               type: "connection",
               text: `${connection.firstName} accepted connection`,
               address: connection.profile.address,
-              time: moment(new Date()).format("LT")
+              time: moment(new Date()).format("LT"),
+              status: false
             };
             notification(friendId, activityObj);
           }

@@ -1,8 +1,5 @@
 var ActivityModel = require("../models/Activity");
-var ConnectionModel = require("../models/Connection");
-var ChatModel = require("../models/Connection");
-
-var moment = require("moment");
+var getCount = require("./count");
 
 var soc;
 var nspp;
@@ -12,7 +9,6 @@ module.exports = {
   },
 
   getNotifications: async function(id, activityObj) {
-    console.log("id", id);
     let notification = await ActivityModel.findOne({ userId: id });
 
     var notArray = [];
@@ -48,15 +44,10 @@ module.exports = {
         }
       });
       if (!multipleView) {
-        console.log("else called", activityObj);
         notification.notifications.push(activityObj);
       }
       await notification.save();
       console.log("notification saved");
-      console.log("s", id);
-      let count = await getCount(id);
-      console.log("count", count);
-      nspp.emit("count", count);
     } else {
       notArray.push(activityObj);
 
@@ -70,14 +61,14 @@ module.exports = {
       let result = await notify.save();
       if (result) {
         console.log("notification saved");
-        console.log("s", id);
-        let count = await getCount(id);
-        console.log("count", count);
-        nspp.emit("count", count);
       } else {
         console.log("notification not saved");
       }
     }
+
+    let count = await getCount(id);
+    console.log("count", count);
+    nspp.emit("count", count);
   }
 };
 
@@ -106,15 +97,19 @@ async function updateNotification(id, activityObj) {
   }
 }
 
-async function getCount(id) {
+/* async function getCount(id) {
+  console.log(id);
+
   let notification = await ActivityModel.aggregate([
     { $match: { userId: id } },
     { $unwind: "$notifications" },
     { $match: { "notifications.status": false } }
   ]);
-
+  var not = await ActivityModel.findOne({ userId: id });
+  console.log("not", not);
   let notificationCount = notification.length;
-  console.log(notification);
+  console.log(notificationCount);
+
   let connection = await ConnectionModel.aggregate([
     { $match: { userId: id } },
     { $unwind: "$active" },
@@ -123,13 +118,16 @@ async function getCount(id) {
 
   let connectionCount = connection.length;
   console.log(connectionCount);
-  let inbox = await ChatModel.aggregate([
-    { $match: { recieverId: id}},
-    { $match: { readMessage: false } }
+  let inbox = await InboxModel.aggregate([
+    { $match: { userId: id } },
+    { $unwind: "$chats" },
+    { $match: { "chats.readMessage": false } }
   ]);
-console.log('inbox',inbox)
+
+  let c = await InboxModel.findOne({ userId: id });
+  console.log("C", c);
   let inboxCount = inbox.length;
   console.log("i", inboxCount);
   let totalCount = notificationCount + connectionCount + inboxCount;
   return totalCount;
-}
+} */
