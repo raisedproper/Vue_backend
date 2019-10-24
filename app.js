@@ -4,7 +4,6 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var mongoose = require('mongoose');
-const ngrok = require('ngrok');
 const { mongooseAssociation } = require('mongoose-association')
 mongooseAssociation(mongoose)
  var io = require("socket.io")(3002);
@@ -16,6 +15,7 @@ nsp.on("connection", function(socket) {
 
  soc = socket;
  require('./routes/socket').start(soc,nsp);
+ require('./middleware/notification').start(soc,nsp)
 }) 
 
 var peopleRouter = require('./routes/people');

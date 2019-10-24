@@ -6,7 +6,6 @@ var ConnectionModel = require("../models/Connection");
 var routeAuthentication = require("../middleware/authentication");
 
 router.use(routeAuthentication);
-var date = new Date();
 var moment = require("moment");
 
 router.post("/getSurroundingPeople", async function(req, res) {
@@ -18,14 +17,14 @@ router.post("/getSurroundingPeople", async function(req, res) {
     type: "Point"
   };
   var userId;
-  let updatedUser = await UserModel.findOneAndUpdate(
+ let updatedUser = await UserModel.findOneAndUpdate(
     { token: token },
-    { $set: { location: location, updatedAt: date } },
+    { $set: { location: location, updatedAt: new Date() } },
     { new: true }
-  );
+  ); 
   if (updatedUser) {
     userId = updatedUser.id;
-    console.log("userId", userId);
+    console.log('12',updatedUser);
     console.log("location of user updated");
   } else {
     console.log("location of user not updated");
@@ -54,9 +53,11 @@ router.post("/getSurroundingPeople", async function(req, res) {
 
         let checkFriends = await ConnectionModel.findOne({ userId: userId });
 
-      
         response.map(async obj => {
+          console.log('obj',obj.updatedAt,'prof',obj.profile.updatedAt)
           let time = moment(obj.updatedAt).format("YYYY-MM-DD HH:mm:ss");
+          console.log('time',time)
+          console.log('compare')
           if(checkFriends){
           var check = checkFriends.active
             .map(a => a.emailAddress)
@@ -94,8 +95,9 @@ router.post("/getSurroundingPeople", async function(req, res) {
           let activeConnection = await ActiveModel.findOne({ userId: userId });
 
           if (activeConnection) {
+            console.log('sffs',modified_response)
             let updatedConnection = await ActiveModel.findOneAndUpdate(
-              { id: userId },
+              { userId: userId },
               {
                 $set: { active: modified_response }
               }
@@ -107,8 +109,8 @@ router.post("/getSurroundingPeople", async function(req, res) {
             let obj = new ActiveModel({
               userId: userId,
               active: modified_response,
-              createdAt: date,
-              updatedAt: date
+              createdAt: new Date(),
+              updatedAt: new Date()
             });
             let connection = await obj.save();
             if (connection) {
@@ -152,7 +154,6 @@ function Filters(ageFilter, genderFilter, timeFilter, firstNameFilter) {
     };
   }
   if (timeFilter && timeFilter !== "All") {
-    var getTime = moment(date).format("YYYY-MM-DD HH:mm:ss");
     var timeStr = `${timeFilter}:00:00`;
     timeStr = timeStr.split(":");
 

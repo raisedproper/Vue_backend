@@ -6,7 +6,6 @@ const bcrypt = require("bcrypt");
 var config = require("../config");
 
 var saltRounds = 10
-var date = new Date()
 
 router.post("/login", function(req, res, next) {
   let { emailAddress, password } = req.body;
@@ -22,7 +21,7 @@ router.post("/login", function(req, res, next) {
         console.log("new token", token);
         UserModel.updateOne(
           { emailAddress: emailAddress },
-          { $set: { token: token,updatedAt: date } },
+          { $set: { token: token,updatedAt: new Date() } },
           function(err, resp) {
             if (resp) {
               console.log("token updated",);
@@ -89,8 +88,8 @@ router.post("/register", function(req, res) {
         emailAddress: emailAddress,
         password: hash,
         token: token,
-        createdAt: date,
-        updatedAt: date
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
 
       User.save(function(err, resp) {

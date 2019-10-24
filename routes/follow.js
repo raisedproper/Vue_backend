@@ -2,9 +2,8 @@ var express = require("express");
 var router = express.Router();
 var UserModel = require("../models/User");
 var FollowModel = require("../models/FollowAccount");
-var date = new Date();
 var moment = require("moment");
-var notification = require("../middleware/notification");
+var notification = require("../middleware/notification").getNotifications;
 
 router.post("/followAccount", async function(req, res) {
   var token = req.headers["token"];
@@ -30,8 +29,8 @@ router.post("/followAccount", async function(req, res) {
         followUsername: followUsername,
         status: "follows",
         token: token,
-        createdAt: date,
-        updatedAt: date
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
 
       followObj.save(async(err, resp) => {
@@ -76,7 +75,7 @@ router.post("/followAccount", async function(req, res) {
             address: follower.profile.address,
             type: accountType,
             text: `${follower.firstName} connected with you`,
-            time: moment(date).format("LT"),
+            time: moment(new Date()).format("LT"),
             status: false
           };
          
@@ -98,7 +97,7 @@ router.post("/followAccount", async function(req, res) {
               publicAccount: follow.profile.publicAccount,
               createdAt: follow.profile.createdAt,
               updatedAt: follow.profile.updatedAt,
-               followAt: date},
+               followAt: new Date()},
           });
         } else if (err) {
           console.log(err);
@@ -138,12 +137,12 @@ router.put("/acceptFollowAccount", async function(req, res) {
       let updatedResp = await FollowModel.updateOne(
         { username: username },
         { 'status': "approved", 
-        'updatedAt': date },
+        'updatedAt': new Date() },
         {$new: true}
       );
 
       if (updatedResp) {
-        let time =  moment(date).format('LT')
+        let time =  moment(new Date()).format('LT')
         var obj = {
             followerId: response.followerId,
             followId: response.followId,

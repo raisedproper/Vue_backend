@@ -1,7 +1,6 @@
 var express = require("express");
 var router = express.Router();
 var date = new Date();
-var UserModel = require("../models/User");
 var ActivityModel = require("../models/Activity");
 var InboxModel = require("../models/Inbox");
 var ConversationModel = require("../models/Conversation");
@@ -14,11 +13,10 @@ router.get("/connections/:id", async (req, res) => {
   var { id } = req.params;
  let friendss = await ConnectionModel.findOne({userId: id});
 
-
   res.json({
     status: 200,
     message: "connections fetched sucessfully",
-    response: friendss.active
+    response: (friendss) ? friendss.active : []
   });
 });
 
@@ -82,7 +80,7 @@ router.get("/inbox/:id", async function(req, res) {
           ? person.recieverId.profile.address
           : person.senderId.profile.address,
       message: person.chats[0].messageBody,
-      readMessage: person.chats[0].readMessage,
+      readMessage: sentBySender == true ? true :person.chats[0].readMessage ,
       sentBysender: sentBySender
     });
   });

@@ -12,7 +12,7 @@ var userSchema = new mongoose.Schema({
 
  profile: {
     age: Number,
-    phoneNumber: Number,
+    phoneNumber: String,
     emailAddress: String,
     address: String,
     profession: String,

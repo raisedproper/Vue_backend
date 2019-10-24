@@ -1,12 +1,8 @@
 var express = require("express");
 var ConversationModel = require("../models/Conversation");
-var ConnectionModel = require("../models/Connection");
 var ChatModel = require("../models/Chat");
 var UserModel = require("../models/User");
-var ActivityModel = require("../models/Activity");
-var InboxModel = require("../models/Inbox")
-var notification = require("../middleware/notification");
-var date = new Date();
+var notification = require("../middleware/notification").getNotifications;
 var moment = require("moment");
 
 module.exports = {
@@ -31,8 +27,8 @@ module.exports = {
           let newConversation = new ConversationModel({
             senderId: msg.senderId,
             recieverId: msg.recieverId,
-            createdAt: date,
-            updatedAt: date
+            createdAt: new Date(),
+            updatedAt: new Date()
           });
 
           let result = await newConversation.save();
@@ -65,13 +61,14 @@ module.exports = {
             response: {
               message: newMessage.message,
               senderId: newMessage.senderId,
-              date: newMessage.date
+              date: moment(newMessage.date).format('YYYY-MM-DD hh:mm:ss')
             }
           };
           nsp.emit("recieve_message", message);
           let sender = await UserModel.findById(msg.senderId);
           var activityObj;
           if (sender) {
+            console.log('gettime',moment(newMessage.date).format("LT"))
             activityObj = {
               firstName: sender.firstName,
               text: `${sender.firstName} sends you a message`,
@@ -88,12 +85,6 @@ module.exports = {
         }
       }
     });
-
-    soc.on("count", async(id) => {
-     let count = await getCount(id);
-     console.log(count)
-     nsp.emit('count',count)
-    });
   }
 };
 
@@ -106,8 +97,8 @@ async function createMessage(obj) {
     readMessage: obj.readMessage,
     showToSender: true,
     showToReceiver: true,
-    createdAt: date,
-    updatedAt: date
+    createdAt: new Date(),
+    updatedAt: new Date()
   });
 
   let saveMessage = await message.save();
@@ -118,7 +109,7 @@ async function createMessage(obj) {
       message: saveMessage.messageBody,
       senderId: saveMessage.senderId,
       recieverId: saveMessage.recieverId,
-      date: saveMessage.createdAt
+      date: new Date()
     };
   } else {
     console.log("error saving message");
@@ -126,32 +117,33 @@ async function createMessage(obj) {
   }
 }
 
-async function getCount(id) {
-  console.log(id);
+// async function getCount(id) {
+//   console.log(id);
 
-  let notification = await ActivityModel.aggregate([
-    { $match: { userId: id } },
-    { $unwind: "$notifications" },
-    { $match: {'notifications.status': false} }
-  ]);
-  
- let notificationCount = notification.length;
+//   let notification = await ActivityModel.aggregate([
+//     { $match: { userId: id } },
+//     { $unwind: "$notifications" },
+//     { $match: {'notifications.status': false} }
+//   ]);
+ 
+//  let notificationCount = notification.length;
+//  console.log(notificationCount)
+//  let connection = await ConnectionModel.aggregate([
+//   { $match: { userId: id } },
+//   { $unwind: "$active" },
+//   { $match: {'active.seen': false} }
+// ]);
 
- let connection = await ConnectionModel.aggregate([
-  { $match: { userId: id } },
-  { $unwind: "$active" },
-  { $match: {'active.seen': false} }
-]);
+// let connectionCount = connection.length;
+// console.log(connectionCount)
+// let inbox =  await InboxModel.aggregate([
+//   { $match: { userId: id } },
+//   { $unwind: "$chats" },
+//   { $match: {'chats.readMessage': false} }
+// ]); 
 
-let connectionCount = connection.length;
-
-let inbox =  await InboxModel.aggregate([
-  { $match: { userId: id } },
-  { $unwind: "$chats" },
-  { $match: {'chats.readMessage': false} }
-]); 
-
-let inboxCount = inbox.length;
-let totalCount = notificationCount + connectionCount + inboxCount
-return totalCount
-}
+// let inboxCount = inbox.length;
+// console.log('i',inboxCount)
+// let totalCount = notificationCount + connectionCount + inboxCount
+// return totalCount
+// }

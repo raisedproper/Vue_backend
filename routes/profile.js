@@ -6,7 +6,7 @@ var multer = require("multer");
 var path = require("path");
 var routeAuthentication = require("../middleware/authentication");
 var moment = require("moment");
-var notification = require("../middleware/notification");
+var notification = require("../middleware/notification").getNotifications;
 var socialMediaAccount = [];
 
 var storage = multer.diskStorage({
@@ -20,7 +20,6 @@ var storage = multer.diskStorage({
     );
   }
 });
-var date = new Date();
 
 var upload = multer({ storage: storage });
 
@@ -93,7 +92,7 @@ module.exports = function(socket, nsp) {
       {
         $set: {
           "profile.profilePicturePath": profilePicture,
-          "profile.updatedAt": date
+          "profile.updatedAt": new Date()
         }
       },
       { new: true }
@@ -149,8 +148,8 @@ module.exports = function(socket, nsp) {
               ? resp.profile.profilePicturePath
               : "",
             publicAccount: true,
-            createdAt: date,
-            updatedAt: date
+            createdAt: new Date(),
+            updatedAt: new Date()
           };
           let update = { user: resp, profile };
 
@@ -214,7 +213,7 @@ module.exports = function(socket, nsp) {
         user.profile.socialMediaAccount[profileLink.id].linked =
           profileLink.linked;
 
-        user.profile.updatedAt = date;
+        user.profile.updatedAt = new Date();
 
         let newProfile = {
           ...user.profile,
@@ -224,7 +223,7 @@ module.exports = function(socket, nsp) {
 
         let updatedUser = await UserModel.findOneAndUpdate(
           { emailAddress: emailAddress },
-          { $set: { updatedAt: date, profile: newProfile } },
+          { $set: { updatedAt: new Date(), profile: newProfile } },
           { new: true }
         );
 
@@ -351,7 +350,7 @@ module.exports = function(socket, nsp) {
           profilePicturePath: viewerDetails.profile.profilePicturePath,
           emailAddress: viewerDetails.profile.emailAddress,
           address: viewerDetails.profile.address,
-          time: moment(date).format("LT"),
+          time: moment(new Date()).format("LT"),
           text: `${viewerDetails.firstName} viewed your profile`,
           status: false
         };
@@ -393,7 +392,7 @@ module.exports = function(socket, nsp) {
 
       var update = await UserModel.findOneAndUpdate(
         { emailAddress: emailAddress },
-        { $set: { updatedAt: date, profile: updatedProfile } }
+        { $set: { updatedAt: new Date(), profile: updatedProfile } }
       );
 
       if (update) {
@@ -434,7 +433,7 @@ module.exports = function(socket, nsp) {
       { emailAddress: req.body.emailAddress },
       {
         $set: {
-          "profile.updatedAt": date,
+          "profile.updatedAt": new Date(),
           "profile.publicAccount": req.body.publicAccount
         }
       },

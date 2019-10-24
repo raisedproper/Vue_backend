@@ -12,6 +12,7 @@
     "debug": "~2.6.9",
     "ejs": "^2.7.1",
     "express": "^4.17.1",
+    "fcm-node": "^1.5.2",
     "handlebars": "^4.2.0",
     "http-errors": "~1.6.3",
     "jade": "~1.11.0",

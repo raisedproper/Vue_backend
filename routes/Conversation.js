@@ -2,7 +2,6 @@ var express = require("express");
 var router = express.Router();
 var ChatModel = require("../models/Chat");
 var routeAuthentication = require("../middleware/authentication");
-var date = new Date();
 
 router.use(routeAuthentication);
 
@@ -30,23 +29,23 @@ async function findConversation(recieverId, senderId) {
 router.post("/getConversation", async function(req, res) {
   var { recieverId, senderId } = req.body;
   let response = await findConversation(recieverId, senderId);
-  
+
   try {
     if (response.length > 0) {
-
-let read = await ChatModel.updateMany(
-  {
-    $or: [
-      { senderId: senderId, recieverId: recieverId },
-      { senderId: recieverId, recieverId: senderId }
-    ]
-  },
-  { $set: { readMessage: true, updatedAt: date } })
-  if(read){
-    console.log('messages are read')
-  } else {
-    console.log('messages are not read')
-  }
+      let read = await ChatModel.updateMany(
+        {
+          $or: [
+            { senderId: senderId, recieverId: recieverId },
+            { senderId: recieverId, recieverId: senderId }
+          ]
+        },
+        { $set: { readMessage: true, updatedAt: new Date() } }
+      );
+      if (read) {
+        console.log("messages are read");
+      } else {
+        console.log("messages are not read");
+      }
 
       console.log("conversation fetched successfully", response);
       res.json({
@@ -77,10 +76,10 @@ router.put("/deleteConversation", async function(req, res) {
     { senderId: senderId, recieverId: recieverId },
     {
       $set: {
-        "chats": [],
-        "showToSender": showToSender,
-        "showToReceiver": showToReceiver,
-        "updatedAt": date
+        chats: [],
+        showToSender: showToSender,
+        showToReceiver: showToReceiver,
+        updatedAt: new Date()
       }
     },
     { new: true }

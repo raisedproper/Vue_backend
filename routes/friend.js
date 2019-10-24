@@ -5,8 +5,7 @@ var UserModel = require("../models/User");
 var routeAuthentication = require("../middleware/authentication");
 var mongoose = require("mongoose");
 var moment = require("moment");
-var date = new Date();
-var notification = require("../middleware/notification");
+var notification = require("../middleware/notification").getNotifications;
 var ActivityModel = require("../models/Activity");
 var ConnectionModel = require("../models/Connection");
 
@@ -48,8 +47,8 @@ module.exports = function(socket, nsp) {
           friend: user2._id,
           status: "pending",
           token: token,
-          createdAt: date,
-          updatedAt: date
+          createdAt: new Date(),
+          updatedAt: new Date()
         });
         console.log("peopleObj", peopleObj);
 
@@ -58,8 +57,8 @@ module.exports = function(socket, nsp) {
           friend: user1._id,
           status: "pending",
           token: token,
-          createdAt: date,
-          updatedAt: date
+          createdAt: new Date(),
+          updatedAt: new Date()
         });
         console.log("peopleObj", peopleObj2);
         var response = await peopleObj.save();
@@ -85,11 +84,11 @@ module.exports = function(socket, nsp) {
             address: friend1.profile.address,
             type: "friendRequest",
             text: `${friend1.firstName} wants to connect`,
-            time: moment(date).format("LT"),
+            time: moment(new Date()).format("LT"),
             id: friend1.id,
             status: false
           };
-console.log(activityObj)
+          console.log('act',activityObj)
           notification(friend2.id, activityObj);
 
           return res.json({
@@ -134,14 +133,14 @@ console.log(activityObj)
       if (response.status != "approved") {
         var update = await PeopleModel.update(
           filter,
-          { $set: { status: "approved", updatedAt: date } },
+          { $set: { status: "approved", updatedAt: new Date() } },
           { new: true }
         );
         console.log("update1", update);
 
         var update2 = await PeopleModel.update(
           filter2,
-          { $set: { status: "approved", updatedAt: date } },
+          { $set: { status: "approved", updatedAt: new Date() } },
           { new: true }
         );
         console.log("update2", update2);
@@ -177,7 +176,7 @@ console.log(activityObj)
               type: "connection",
               text: `${connection.firstName} accepted connection`,
               address: connection.profile.address,
-              time: moment(date).format("LT")
+              time: moment(new Date()).format("LT")
             };
             notification(friendId, activityObj);
           }
@@ -265,10 +264,6 @@ console.log(activityObj)
               },
               { new: true }
             );
-
-
-
-
             console.log("connection removed");
             console.log("friend connections removed");
             return res.json({
@@ -390,8 +385,8 @@ console.log(activityObj)
       let obj = new ConnectionModel({
         userId: id,
         active: friendss,
-        createdAt: date,
-        updatedAt: date
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
 
       let save = await obj.save();
