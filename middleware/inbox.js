@@ -1,13 +1,15 @@
 var ConversationModel = require("../models/Conversation");
 var InboxModel = require("../models/Inbox");
 module.exports = async function(id) {
+
   var AllChats = [];
   var sentBySender;
   var Sender;
-  const conversations = await ConversationModel.find({
+
+   var conversations = await ConversationModel.find({
     $or: [{ senderId: id }, { recieverId: id }]
   })
-    .populate({
+     .populate({
       path: "recieverId",
       populate: {
         path: "recieverId",
@@ -26,6 +28,7 @@ module.exports = async function(id) {
 
   console.log("conversation", conversations);
 
+  if(conversations){
   conversations.map(person => {
     if (person.chats[person.chats.length - 1].senderId.equals(id)) {
       Sender = true;
@@ -65,6 +68,7 @@ module.exports = async function(id) {
   console.log('all',AllChats)
   if (AllChats) {
     let checkInbox = await InboxModel.findOne({ userId: id });
+    console.log('check',checkInbox)
     if (checkInbox) {
       let updateIndex = await InboxModel.findOneAndUpdate(
         { userId: id },
@@ -88,6 +92,7 @@ module.exports = async function(id) {
       }
     }
   }
+}
 
-  return AllChats;
+  return AllChats;  
 };

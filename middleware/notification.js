@@ -1,5 +1,4 @@
 var ActivityModel = require("../models/Activity");
-var getCount = require("./count");
 
 var soc;
 var nspp;
@@ -65,10 +64,6 @@ module.exports = {
         console.log("notification not saved");
       }
     }
-
-    let count = await getCount(id);
-    console.log("count", count);
-    nspp.emit("count", count);
   }
 };
 
@@ -96,38 +91,3 @@ async function updateNotification(id, activityObj) {
     console.log("updated", updated);
   }
 }
-
-/* async function getCount(id) {
-  console.log(id);
-
-  let notification = await ActivityModel.aggregate([
-    { $match: { userId: id } },
-    { $unwind: "$notifications" },
-    { $match: { "notifications.status": false } }
-  ]);
-  var not = await ActivityModel.findOne({ userId: id });
-  console.log("not", not);
-  let notificationCount = notification.length;
-  console.log(notificationCount);
-
-  let connection = await ConnectionModel.aggregate([
-    { $match: { userId: id } },
-    { $unwind: "$active" },
-    { $match: { "active.seen": false } }
-  ]);
-
-  let connectionCount = connection.length;
-  console.log(connectionCount);
-  let inbox = await InboxModel.aggregate([
-    { $match: { userId: id } },
-    { $unwind: "$chats" },
-    { $match: { "chats.readMessage": false } }
-  ]);
-
-  let c = await InboxModel.findOne({ userId: id });
-  console.log("C", c);
-  let inboxCount = inbox.length;
-  console.log("i", inboxCount);
-  let totalCount = notificationCount + connectionCount + inboxCount;
-  return totalCount;
-} */

@@ -8,7 +8,7 @@ var moment = require("moment");
 var notification = require("../middleware/notification").getNotifications;
 var ActivityModel = require("../models/Activity");
 var ConnectionModel = require("../models/Connection");
-
+var getCount = require("../middleware/count");
 router.use(routeAuthentication);
 
 module.exports = function(socket, nsp) {
@@ -88,8 +88,20 @@ module.exports = function(socket, nsp) {
             id: friend1.id,
             status: false
           };
-          console.log('act',activityObj)
-          notification(friend2.id, activityObj);
+        
+          await notification(friend2.id, activityObj);
+
+          let count1 = await getCount(friend1.id);
+          nsp.emit(`/${friend1.id}`, {
+            id: friend1.id,
+            count: count1
+          });
+
+          let count2 = await getCount(friend2.id);
+          nsp.emit(`/${friend2.id}`, {
+            id: friend2.id,
+            count: count2
+          });
 
           return res.json({
             status: 200,
@@ -166,8 +178,8 @@ module.exports = function(socket, nsp) {
           console.log("getNotification", getNotification);
           if (getNotification) {
             console.log("notification removed");
-          }
 
+          }
           if (connection) {
             let activityObj = {
               firstName: connection.firstName,
@@ -179,12 +191,28 @@ module.exports = function(socket, nsp) {
               time: moment(new Date()).format("LT"),
               status: false
             };
-            notification(friendId, activityObj);
+           await notification(friendId, activityObj);
+
+           let adduserFriend = await getFriends(userId);
+           let addfriendUser = await getFriends(friendId);
+
+
+            let count1 = await getCount(friendId);
+            console.log('check1',count1)
+            nsp.emit(`/${friendId}`, {
+              id: friendId,
+              count: count1
+            });
+  
+            let count2 = await getCount(userId);
+            console.log('check2',count2)
+            nsp.emit(`/${userId}`, {
+              id: userId,
+              count: count2
+            });
           }
 
-          let adduserFriend = await getFriends(userId);
-          let addfriendUser = await getFriends(friendId);
-          console.log(adduserFriend)
+        
           return res.json({
             status: 200,
             message: "friend request accepted",

@@ -44,13 +44,13 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public/images')));
 
 app.use('/',indexRouter)
-app.use('/people', peopleRouter);
+app.use('/people', peopleRouter(soc,nsp));
 app.use('/authentication', authenticationRouter);
 app.use('/friends', friendsRouter(soc,nsp));
 app.use('/profile', profileRouter(soc,nsp));
-app.use('/conversation',conversationRouter);
-app.use('/follow',followRouter)
-app.use('/activity',activityRouter)
+app.use('/conversation',conversationRouter(soc,nsp));
+app.use('/follow',followRouter(soc,nsp))
+app.use('/activity',activityRouter(soc,nsp))
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

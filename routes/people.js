@@ -7,7 +7,7 @@ var routeAuthentication = require("../middleware/authentication");
 
 router.use(routeAuthentication);
 var moment = require("moment");
-
+module.exports = function(socket, nsp) {
 router.post("/getSurroundingPeople", async function(req, res) {
   var token = req.headers["token"];
   UserModel.createIndexes();
@@ -228,4 +228,5 @@ router.post("/refineConnectPeople/:id", async function(req, res) {
   });
 });
 
-module.exports = router;
+return router;
+}

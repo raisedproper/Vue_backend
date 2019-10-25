@@ -7,6 +7,7 @@ var path = require("path");
 var routeAuthentication = require("../middleware/authentication");
 var moment = require("moment");
 var notification = require("../middleware/notification").getNotifications;
+var getCount = require("../middleware/count");
 var socialMediaAccount = [];
 
 var storage = multer.diskStorage({
@@ -80,7 +81,6 @@ module.exports = function(socket, nsp) {
     res
   ) {
     var token = req.headers["token"];
-    console.log("req.file 6768699", req.file);
     var profilePicture = req.file ? req.file.filename : "";
 
     if (!profilePicture) {
@@ -354,7 +354,21 @@ module.exports = function(socket, nsp) {
           text: `${viewerDetails.firstName} viewed your profile`,
           status: false
         };
-        notification(resp.id, activityObj);
+        await notification(resp.id, activityObj);
+      
+        let count1 = await getCount(viewerDetails.id);
+        console.log('c1',count1)
+        console.log(`/${viewerDetails.id}`)
+        nsp.emit(`/${viewerDetails.id}`, {
+          id: viewerDetails.id,
+          count: count1
+        });
+
+        let count2 = await getCount(resp.id);
+        console.log('c2',count2)
+        console.log(`/${resp.id}`)
+        nsp.emit(`/${resp.id}`, { id: resp.id, count: count2 });
+
         return res.json({
           status: 200,
           message: "profile fetched successfully",

@@ -4,7 +4,12 @@ var UserModel = require("../models/User");
 var FollowModel = require("../models/FollowAccount");
 var moment = require("moment");
 var notification = require("../middleware/notification").getNotifications;
+var getCount = require("../middleware/count");
+var routeAuthentication = require("../middleware/authentication");
 
+router.use(routeAuthentication);
+
+module.exports = function(socket, nsp) {
 router.post("/followAccount", async function(req, res) {
   var token = req.headers["token"];
   var { followerId, followId, accountType } = req.body;
@@ -79,7 +84,19 @@ router.post("/followAccount", async function(req, res) {
             status: false
           };
          
-          notification(follow.id,activityObj)
+          await notification(follow.id,activityObj)
+
+          let count1 = await getCount(follow.id);
+          nsp.emit(`/${follow.id}`, {
+            id: follow.id,
+            count: count1
+          });
+
+          let count2 = await getCount(follower.id);
+          nsp.emit(`/${follower.id}`, {
+            id: follower.id,
+            count: count2
+          });
 
           res.json({
             status: 200,
@@ -186,4 +203,5 @@ router.put("/acceptFollowAccount", async function(req, res) {
   }
 });
 
-module.exports = router;
+return router;
+}

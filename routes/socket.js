@@ -5,13 +5,14 @@ var UserModel = require("../models/User");
 var notification = require("../middleware/notification").getNotifications;
 var moment = require("moment");
 var getInbox = require("../middleware/inbox");
+var getCount = require("../middleware/count");
 
 module.exports = {
   start: function(soc, nsp) {
-    console.log("hgj");
     soc.on("send_message", async msg => {
       console.log("here sokcet");
       var conversationId;
+      var newconversation = false;
       if (msg.recieverId) {
         let existingConversation = await ConversationModel.findOne({
           $or: [
@@ -23,8 +24,11 @@ module.exports = {
         if (existingConversation) {
           console.log("conversation exists", existingConversation);
           conversationId = existingConversation.id;
+          newconversation = false;
         } else {
           console.log("conversation not", existingConversation);
+          console.log('jer',newconversation)
+          newconversation = true;
           let newConversation = new ConversationModel({
             senderId: msg.senderId,
             recieverId: msg.recieverId,
@@ -65,11 +69,14 @@ module.exports = {
               date: moment(newMessage.date).format("YYYY-MM-DD hh:mm:ss")
             }
           };
-          var senderInbox = await getInbox(msg.senderId);
+           if (newconversation == true) {
+            var senderInbox = await getInbox(newMessage.senderId);
+            console.log("sendinbox", senderInbox);
 
-          var recieverInbox = await getInbox(msg.recieverId);
-          console.log("recieverInbox", recieverInbox);
-
+            var recieverInbox = await getInbox(newMessage.recieverId);
+            console.log("recieverInbox", recieverInbox);
+          }
+ 
           nsp.emit("recieve_message", message);
 
           let sender = await UserModel.findById(msg.senderId);
@@ -87,7 +94,18 @@ module.exports = {
               status: false
             };
 
-            notification(newMessage.recieverId, activityObj);
+            await notification(newMessage.recieverId, activityObj);
+            let count1 = await getCount(newMessage.recieverId);
+            nsp.emit(`/${newMessage.recieverId}`, {
+              id: newMessage.recieverId,
+              count: count1
+            });
+
+            let count2 = await getCount(newMessage.senderId);
+            nsp.emit(`/${newMessage.senderId}`, {
+              id: newMessage.senderId,
+              count: count2
+            });
           }
         }
       }
