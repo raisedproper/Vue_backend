@@ -22,104 +22,111 @@ module.exports = function(socket, nsp) {
     let user2 = await UserModel.findById(friendId);
     console.log("user2", user2);
 
-    if (user1 && user2) {
-      let people = await PeopleModel.findOne({
-        user: user1.id,
-        friend: user2.id
-      });
-
-      if (people) {
-        console.log("response", people);
-        if (people.status == "pending") {
-          res.json({
-            status: 202,
-            message: "friend request already sent to this persion"
-          });
-        } else if (people.status == "approved") {
-          res.json({
-            status: 202,
-            message: "already added as a friend"
-          });
-        }
-      } else if (!people) {
-        let peopleObj = new PeopleModel({
-          user: user1._id,
-          friend: user2._id,
-          status: "pending",
-          token: token,
-          createdAt: new Date(),
-          updatedAt: new Date()
+    try {
+      if (user1 && user2) {
+        let people = await PeopleModel.findOne({
+          user: user1.id,
+          friend: user2.id
         });
-        console.log("peopleObj", peopleObj);
 
-        let peopleObj2 = new PeopleModel({
-          user: user2._id,
-          friend: user1._id,
-          status: "pending",
-          token: token,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
-        console.log("peopleObj", peopleObj2);
-        var response = await peopleObj.save();
-        var response2 = await peopleObj2.save();
-
-        if (response && response2) {
-          const friend1 = await UserModel.findById(user1.id);
-          const friend2 = await UserModel.findById(user2.id);
-          if (friend1) {
-            friend1.friends.push(response);
+        if (people) {
+          console.log("response", people);
+          if (people.status == "pending") {
+            res.json({
+              status: 202,
+              message: "friend request already sent to this persion"
+            });
+          } else if (people.status == "approved") {
+            res.json({
+              status: 202,
+              message: "already added as a friend"
+            });
           }
-          await friend1.save();
+        } else if (!people) {
+          let peopleObj = new PeopleModel({
+            user: user1._id,
+            friend: user2._id,
+            status: "pending",
+            token: token,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
 
-          if (friend2) {
-            friend2.friends.push(response2);
+          let peopleObj2 = new PeopleModel({
+            user: user2._id,
+            friend: user1._id,
+            status: "pending",
+            token: token,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+
+          var response = await peopleObj.save();
+          var response2 = await peopleObj2.save();
+
+          if (response && response2) {
+            const friend1 = await UserModel.findById(user1.id);
+            const friend2 = await UserModel.findById(user2.id);
+            if (friend1) {
+              friend1.friends.push(response);
+            }
+            await friend1.save();
+
+            if (friend2) {
+              friend2.friends.push(response2);
+            }
+            await friend2.save();
+
+            let activityObj = {
+              firstName: friend1.firstName,
+              profilePicturePath: friend1.profile.profilePicturePath,
+              emailAddress: friend1.profile.emailAddress,
+              address: friend1.profile.address,
+              type: "friendRequest",
+              text: `${friend1.firstName} wants to connect`,
+              time: moment(new Date()).format("LT"),
+              id: friend1.id,
+              status: false
+            };
+
+            await notification(friend2.id, activityObj);
+
+            let count1 = await getCount(friend1.id);
+            nsp.emit(`/${friend1.id}`, {
+              id: friend1.id,
+              count: count1
+            });
+
+            let count2 = await getCount(friend2.id);
+            nsp.emit(`/${friend2.id}`, {
+              id: friend2.id,
+              count: count2
+            });
+
+            return res.json({
+              status: 200,
+              message: "friend request sent successfully"
+            });
+          } else {
+            console.log("friend request didn't sent");
+            return res.json({
+              status: 400,
+              message: "friend request didn't sent"
+            });
           }
-          await friend2.save();
-
-          let activityObj = {
-            firstName: friend1.firstName,
-            profilePicturePath: friend1.profile.profilePicturePath,
-            emailAddress: friend1.profile.emailAddress,
-            address: friend1.profile.address,
-            type: "friendRequest",
-            text: `${friend1.firstName} wants to connect`,
-            time: moment(new Date()).format("LT"),
-            id: friend1.id,
-            status: false
-          };
-        
-          await notification(friend2.id, activityObj);
-
-          let count1 = await getCount(friend1.id);
-          nsp.emit(`/${friend1.id}`, {
-            id: friend1.id,
-            count: count1
-          });
-
-          let count2 = await getCount(friend2.id);
-          nsp.emit(`/${friend2.id}`, {
-            id: friend2.id,
-            count: count2
-          });
-
-          return res.json({
-            status: 200,
-            message: "friend request sent successfully"
-          });
-        } else {
-          console.log("friend request didn't sent");
-          return res.json({
-            status: 400,
-            message: "friend request didn't sent"
-          });
         }
+      } else {
+        console.log("These users doesn't exist");
+        return res.json({
+          status: 404,
+          message: "These users doesn't exist"
+        });
       }
-    } else {
-      console.log("These users doesn't exist");
+    } catch (err) {
+      console.log("error creating friend", err);
       return res.json({
         status: 404,
-        message: "These users doesn't exist"
+        message: "error creating friend"
       });
     }
   });
@@ -140,104 +147,107 @@ module.exports = function(socket, nsp) {
       friend: friendId
     });
 
-    if (response && response2) {
-      console.log("user found", response);
-      if (response.status != "approved") {
-        var update = await PeopleModel.update(
-          filter,
-          { $set: { status: "approved", updatedAt: new Date() } },
-          { new: true }
-        );
-        console.log("update1", update);
-
-        var update2 = await PeopleModel.update(
-          filter2,
-          { $set: { status: "approved", updatedAt: new Date() } },
-          { new: true }
-        );
-        console.log("update2", update2);
-
-        if (update.nModified != 0 && update2.nModified != 0) {
-          console.log("friend request accepted", response);
-          let connection = await UserModel.findById(userId);
-          let getFriend = await UserModel.findById(friendId);
-          console.log("email", getFriend.emailAddress);
-
-          let getNotification = await ActivityModel.findOneAndUpdate(
-            { userId: userId },
-            {
-              $pull: {
-                notifications: {
-                  emailAddress: getFriend.emailAddress,
-                  type: "friendRequest"
-                }
-              }
-            },
+    try {
+      if (response && response2) {
+        console.log("user found", response);
+        if (response.status != "approved") {
+          var update = await PeopleModel.update(
+            filter,
+            { $set: { status: "approved", updatedAt: new Date() } },
             { new: true }
           );
-          console.log("getNotification", getNotification);
-          if (getNotification) {
-            console.log("notification removed");
 
-          }
-          if (connection) {
-            let activityObj = {
-              firstName: connection.firstName,
-              profilePicturePath: connection.profile.profilePicturePath,
-              emailAddress: connection.profile.emailAddress,
-              type: "connection",
-              text: `${connection.firstName} accepted connection`,
-              address: connection.profile.address,
-              time: moment(new Date()).format("LT"),
-              status: false
-            };
-           await notification(friendId, activityObj);
+          var update2 = await PeopleModel.update(
+            filter2,
+            { $set: { status: "approved", updatedAt: new Date() } },
+            { new: true }
+          );
 
-           let adduserFriend = await getFriends(userId);
-           let addfriendUser = await getFriends(friendId);
+          if (update.nModified != 0 && update2.nModified != 0) {
+            console.log("friend request accepted", response);
+            let connection = await UserModel.findById(userId);
+            let getFriend = await UserModel.findById(friendId);
+            console.log("email", getFriend.emailAddress);
 
+            let getNotification = await ActivityModel.findOneAndUpdate(
+              { userId: userId },
+              {
+                $pull: {
+                  notifications: {
+                    emailAddress: getFriend.emailAddress,
+                    type: "friendRequest"
+                  }
+                }
+              },
+              { new: true }
+            );
+            console.log("getNotification", getNotification);
+            if (getNotification) {
+              console.log("notification removed");
+            }
+            if (connection) {
+              let activityObj = {
+                firstName: connection.firstName,
+                profilePicturePath: connection.profile.profilePicturePath,
+                emailAddress: connection.profile.emailAddress,
+                type: "connection",
+                text: `${connection.firstName} accepted connection`,
+                address: connection.profile.address,
+                time: moment(new Date()).format("LT"),
+                status: false
+              };
+              await notification(friendId, activityObj);
 
-            let count1 = await getCount(friendId);
-            console.log('check1',count1)
-            nsp.emit(`/${friendId}`, {
-              id: friendId,
-              count: count1
+              let adduserFriend = await getFriends(userId);
+              let addfriendUser = await getFriends(friendId);
+
+              let count1 = await getCount(friendId);
+              console.log("check1", count1);
+              nsp.emit(`/${friendId}`, {
+                id: friendId,
+                count: count1
+              });
+
+              let count2 = await getCount(userId);
+              console.log("check2", count2);
+              nsp.emit(`/${userId}`, {
+                id: userId,
+                count: count2
+              });
+            }
+
+            return res.json({
+              status: 200,
+              message: "friend request accepted",
+              respone: getNotification
             });
-  
-            let count2 = await getCount(userId);
-            console.log('check2',count2)
-            nsp.emit(`/${userId}`, {
-              id: userId,
-              count: count2
+          } else {
+            res.json({
+              status: 400,
+              message: "error while accepting friend request"
             });
           }
-
-        
+        } else if (
+          response.status == "approved" &&
+          response2.status == "approved"
+        ) {
           return res.json({
-            status: 200,
-            message: "friend request accepted",
-            respone: getNotification
-          });
-        } else {
-          res.json({
-            status: 400,
-            message: "error while accepting friend request"
+            status: 202,
+            message: "Already added as friend"
           });
         }
-      } else if (
-        response.status == "approved" &&
-        response2.status == "approved"
-      ) {
+      } else if (!response || !response2) {
+        console.log("no user found", response);
         return res.json({
-          status: 202,
-          message: "Already added as friend"
+          status: 203,
+          message: "Kindly send friend request to approve"
         });
       }
-    } else if (!response || !response2) {
-      console.log("no user found", response);
+    } catch (err) {
+      console.log("error accepting friend request", err);
       return res.json({
-        status: 203,
-        message: "Kindly send friend request to approve"
+        status: 404,
+        message: "error accepting friend request"
       });
     }
   });
@@ -248,107 +258,114 @@ module.exports = function(socket, nsp) {
 
     let user = await UserModel.findOne({ token: token });
     let friend = await UserModel.findOne({ id: friendId });
-    if (user) {
-      let response = await PeopleModel.findOneAndRemove({
-        user: user.id,
-        friend: friendId
-      });
 
-      let response2 = await PeopleModel.findOneAndRemove({
-        user: friendId,
-        friend: user.id
-      });
+    try {
+      if (user) {
+        let response = await PeopleModel.findOneAndRemove({
+          user: user.id,
+          friend: friendId
+        });
 
-      if (response && response2) {
-        console.log("response111", response);
-        let update1 = await UserModel.findOneAndUpdate(
-          { _id: user.id },
-          { $pullAll: { friends: [mongoose.Types.ObjectId(response._id)] } },
-          { new: true }
-        );
-        console.log("response222", response2);
-        let update2 = await UserModel.findOneAndUpdate(
-          { _id: friendId },
-          { $pullAll: { friends: [mongoose.Types.ObjectId(response2._id)] } },
-          { new: true }
-        );
+        let response2 = await PeopleModel.findOneAndRemove({
+          user: friendId,
+          friend: user.id
+        });
 
-        if (response.status == "approved" && response2.status == "approved") {
-          if (update1.emailAddress && update2.emailAddress) {
-            let remove = await ConnectionModel.findOneAndUpdate(
-              { userId: user.id },
-              {
-                $pull: {
-                  active: { emailAddress: update2.emailAddress }
-                }
-              },
-              { new: true }
-            );
-            let remove2 = await ConnectionModel.findOneAndUpdate(
-              { userId: friendId },
-              {
-                $pull: {
-                  active: { emailAddress: update1.emailAddress }
-                }
-              },
-              { new: true }
-            );
-            console.log("connection removed");
-            console.log("friend connections removed");
-            return res.json({
-              status: 200,
-              message: "friend connection removed"
-            });
-          } else {
-            console.log("friend connection not removed");
-            return res.json({
-              status: 400,
-              message: "friend connection not removed"
-            });
-          }
-        } else if (
-          response.status == "pending" &&
-          response2.status == "pending"
-        ) {
-          if (update1.emailAddress && update2.emailAddress) {
-            console.log("email", update2.emailAddress);
-            let getNotification = await ActivityModel.findOneAndUpdate(
-              { userId: user.id },
-              {
-                $pull: {
-                  notifications: {
-                    emailAddress: update2.emailAddress,
-                    type: "friendRequest"
+        if (response && response2) {
+          let update1 = await UserModel.findOneAndUpdate(
+            { _id: user.id },
+            { $pullAll: { friends: [mongoose.Types.ObjectId(response._id)] } },
+            { new: true }
+          );
+
+          let update2 = await UserModel.findOneAndUpdate(
+            { _id: friendId },
+            { $pullAll: { friends: [mongoose.Types.ObjectId(response2._id)] } },
+            { new: true }
+          );
+
+          if (response.status == "approved" && response2.status == "approved") {
+            if (update1.emailAddress && update2.emailAddress) {
+              let remove = await ConnectionModel.findOneAndUpdate(
+                { userId: user.id },
+                {
+                  $pull: {
+                    active: { emailAddress: update2.emailAddress }
                   }
-                }
-              },
-              { new: true }
-            );
-
-            if (getNotification) {
-              console.log("notification removed");
+                },
+                { new: true }
+              );
+              let remove2 = await ConnectionModel.findOneAndUpdate(
+                { userId: friendId },
+                {
+                  $pull: {
+                    active: { emailAddress: update1.emailAddress }
+                  }
+                },
+                { new: true }
+              );
+              console.log("connection removed");
+              console.log("friend connections removed");
+              return res.json({
+                status: 200,
+                message: "friend connection removed"
+              });
+            } else {
+              console.log("friend connection not removed");
+              return res.json({
+                status: 400,
+                message: "friend connection not removed"
+              });
             }
+          } else if (
+            response.status == "pending" &&
+            response2.status == "pending"
+          ) {
+            if (update1.emailAddress && update2.emailAddress) {
+              let getNotification = await ActivityModel.findOneAndUpdate(
+                { userId: user.id },
+                {
+                  $pull: {
+                    notifications: {
+                      emailAddress: update2.emailAddress,
+                      type: "friendRequest"
+                    }
+                  }
+                },
+                { new: true }
+              );
 
-            console.log("friend request rejected successfully");
-            return res.json({
-              status: 200,
-              message: "friend request rejected successfully",
-              response: getNotification.notifications
-            });
-          } else {
-            console.log("friend request not rejected");
-            return res.json({
-              status: 400,
-              message: "friend request not rejected"
-            });
+              if (getNotification) {
+                console.log("notification removed");
+              }
+
+              console.log("friend request rejected successfully");
+              return res.json({
+                status: 200,
+                message: "friend request rejected successfully",
+                response: getNotification.notifications
+              });
+            } else {
+              console.log("friend request not rejected");
+              return res.json({
+                status: 400,
+                message: "friend request not rejected"
+              });
+            }
           }
         }
+      } else {
+        console.log("This friend doesnot exist");
+        res.json({
+          status: 404,
+          message: "This friend doesnot exist"
+        });
       }
-    } else {
-      console.log("This friend doesnot exist");
+    } catch (err) {
+      console.log("error finding friend request", err);
       res.json({
         status: 404,
-        message: "This friend doesnot exist"
+        message: "error finding friend request"
       });
     }
   });
@@ -419,11 +436,11 @@ module.exports = function(socket, nsp) {
       });
 
       let save = await obj.save();
-      
+
       if (save) {
         console.log("connections saved successfully");
       }
-      return save
+      return save;
     }
   }
 

@@ -151,7 +151,6 @@ module.exports = function(socket, nsp) {
             id: recieverId,
             count: count2
           });
-
         }
         console.log("conversation removed", resp);
         res.json({

@@ -97,24 +97,26 @@ module.exports = function(socket, nsp) {
       },
       { new: true }
     );
-    if (resp) {
-      console.log("image uploaded successfully", resp.profile);
-      return res.json({
-        status: 200,
-        message: "image uploaded successfully",
-        response: { profilePicturePath: resp.profile.profilePicturePath }
-      });
-    } else if (err) {
-      console.log("error while uploading image");
+    try {
+      if (resp) {
+        console.log("image uploaded successfully", resp.profile);
+        return res.json({
+          status: 200,
+          message: "image uploaded successfully",
+          response: { profilePicturePath: resp.profile.profilePicturePath }
+        });
+      } else if (!resp) {
+        console.log("This email Address doesn't exists");
+        return res.json({
+          status: 400,
+          message: "This email Address doesn't exists"
+        });
+      }
+    } catch (err) {
+      console.log("error while uploading image", err);
       return res.json({
         status: 404,
         message: "error while uploading image"
-      });
-    } else if (!resp) {
-      console.log("This email Address doesn't exists");
-      return res.json({
-        status: 400,
-        message: "This email Address doesn't exists"
       });
     }
   });
@@ -201,7 +203,7 @@ module.exports = function(socket, nsp) {
   router.post("/addProfileLink", async function(req, res) {
     let emailAddress = req.body.emailAddress;
     var profileLink = req.body.profileLink;
-    console.log("profile", profileLink);
+
     let user = await UserModel.findOne({ emailAddress: emailAddress });
     try {
       if (user.profile.emailAddress) {
@@ -266,29 +268,36 @@ module.exports = function(socket, nsp) {
     var token = req.headers["token"];
     let user = await UserModel.findOne({ token: token });
     console.log("user found", user);
-    if (user) {
-      if (user.profile.emailAddress) {
-        let profileDetails = {
-          id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          ...user.profile
-        };
-        return res.json({
-          status: 200,
-          message: "profile fetched successfully",
-          response: {
-            profileDetails: profileDetails
-          }
-        });
-      } else if (!user.profile.emailAddress) {
-        console.log("This profile doesnot exists");
-        return res.json({
-          status: 400,
-          authorization: false,
-          message: "This profile doesnot exists"
-        });
+    try {
+      if (user) {
+        if (user.profile.emailAddress) {
+          let profileDetails = {
+            id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            ...user.profile
+          };
+          return res.json({
+            status: 200,
+            message: "profile fetched successfully",
+            response: {
+              profileDetails: profileDetails
+            }
+          });
+        } else if (!user.profile.emailAddress) {
+          console.log("This profile doesnot exists");
+          return res.json({
+            status: 400,
+            authorization: false,
+            message: "This profile doesnot exists"
+          });
+        }
       }
+    } catch (err) {
+      return res.json({
+        status: 404,
+        message: "error fetching profile"
+      });
     }
   });
 
@@ -298,6 +307,7 @@ module.exports = function(socket, nsp) {
 
     let resp = await UserModel.findOne({ emailAddress: emailAddress });
     console.log("resp", resp);
+    try{
     if (resp) {
       if (resp.profile.emailAddress) {
         console.log("user found", resp);
@@ -355,18 +365,16 @@ module.exports = function(socket, nsp) {
           status: false
         };
         await notification(resp.id, activityObj);
-      
+
         let count1 = await getCount(viewerDetails.id);
-        console.log('c1',count1)
-        console.log(`/${viewerDetails.id}`)
+
         nsp.emit(`/${viewerDetails.id}`, {
           id: viewerDetails.id,
           count: count1
         });
 
         let count2 = await getCount(resp.id);
-        console.log('c2',count2)
-        console.log(`/${resp.id}`)
+
         nsp.emit(`/${resp.id}`, { id: resp.id, count: count2 });
 
         return res.json({
@@ -385,6 +393,13 @@ module.exports = function(socket, nsp) {
         });
       }
     }
+  } catch(err){
+    console.log('error while fetching profile',err)
+    return res.json({
+      status: 404,
+      message: "error while fetching profile"
+    });
+  }
   });
 
   router.put("/deleteProfileLink", async function(req, res) {
@@ -393,8 +408,8 @@ module.exports = function(socket, nsp) {
     var emailAddress = req.body.emailAddress;
 
     var user = await UserModel.findOne({ emailAddress: emailAddress });
-    console.log("user", user);
-
+   
+try{
     if (user.profile.emailAddress) {
       user.profile.socialMediaAccount[socialmediaaccountId].username = "";
       user.profile.socialMediaAccount[socialmediaaccountId].link = "";
@@ -437,8 +452,13 @@ module.exports = function(socket, nsp) {
         authorization: false,
         message: "This profile doesnot exists"
       });
-    } else if (err) {
+    }
+   } catch (err) {
       console.log("error in finding user", err);
+      return res.json({
+        status: 404,
+        message: "error removing profile link"
+      });
     }
   });
 
@@ -454,7 +474,6 @@ module.exports = function(socket, nsp) {
       { new: true }
     );
     try {
-      console.log("public", update.profile);
       if (update.profile.emailAddress) {
         console.log("account privacy changed");
         res.json({
@@ -469,7 +488,7 @@ module.exports = function(socket, nsp) {
         });
       }
     } catch (err) {
-      console.log(err);
+      console.log('account privacy not changed',err);
       res.json({
         status: 400,
         message: "account privacy not changed"

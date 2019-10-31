@@ -17,6 +17,7 @@ router.post("/followAccount", async function(req, res) {
   let follower = await UserModel.findById(followerId);
   let follow = await UserModel.findById(followId);
 
+  try{
   if (follower && follow) {
     let response = await FollowModel.find({
       followerId: follower.id,
@@ -114,7 +115,7 @@ router.post("/followAccount", async function(req, res) {
               publicAccount: follow.profile.publicAccount,
               createdAt: follow.profile.createdAt,
               updatedAt: follow.profile.updatedAt,
-               followAt: new Date()},
+              followAt: new Date()},
           });
         } else if (err) {
           console.log(err);
@@ -138,6 +139,13 @@ router.post("/followAccount", async function(req, res) {
       message: "These users doesn't exist"
     });
   }
+} catch(err){
+  console.log("error while following account",err);
+    res.json({
+      status: 400,
+      message: "error while following account"
+    });
+ }
 });
 
 router.put("/acceptFollowAccount", async function(req, res) {
@@ -149,7 +157,6 @@ router.put("/acceptFollowAccount", async function(req, res) {
     username: username
   });
   if (response) {
-      console.log('response',response)
     if (response.status != "approved") {
       let updatedResp = await FollowModel.updateOne(
         { username: username },

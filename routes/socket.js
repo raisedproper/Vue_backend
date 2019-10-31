@@ -1,4 +1,3 @@
-var express = require("express");
 var ConversationModel = require("../models/Conversation");
 var ChatModel = require("../models/Chat");
 var UserModel = require("../models/User");
@@ -10,7 +9,6 @@ var getCount = require("../middleware/count");
 module.exports = {
   start: function(soc, nsp) {
     soc.on("send_message", async msg => {
-      console.log("here sokcet");
       var conversationId;
       var newconversation = false;
       if (msg.recieverId) {
@@ -27,7 +25,6 @@ module.exports = {
           newconversation = false;
         } else {
           console.log("conversation not", existingConversation);
-          console.log('jer',newconversation)
           newconversation = true;
           let newConversation = new ConversationModel({
             senderId: msg.senderId,
