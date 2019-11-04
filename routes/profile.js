@@ -75,6 +75,21 @@ var socialMediaAccount = {
   }
 };
 
+function toUpper(word) {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
+/* function getAge(dateString) {
+  var today = new Date();
+  var birthDate = new Date(dateString);
+  var age = today.getFullYear() - birthDate.getFullYear();
+  var m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+  }
+  return age;
+} */
+
 module.exports = function(socket, nsp) {
   router.post("/imageUpload", upload.single("profilePicture"), async function(
     req,
@@ -130,6 +145,10 @@ module.exports = function(socket, nsp) {
       gender,
       address
     } = req.body;
+    profession = toUpper(profession);
+    emailAddress = toUpper(emailAddress);
+    address = toUpper(address);
+    gender = toUpper(gender);
 
     socialMediaAccount["gmail"].link = emailAddress;
     socialMediaAccount["gmail"].linked = true;
@@ -203,6 +222,8 @@ module.exports = function(socket, nsp) {
   router.post("/addProfileLink", async function(req, res) {
     let emailAddress = req.body.emailAddress;
     var profileLink = req.body.profileLink;
+
+    emailAddress = toUpper(emailAddress);
 
     let user = await UserModel.findOne({ emailAddress: emailAddress });
     try {
@@ -303,88 +324,150 @@ module.exports = function(socket, nsp) {
 
   router.post("/viewProfile", async function(req, res) {
     let emailAddress = req.body.emailAddress;
+    emailAddress = toUpper(emailAddress);
     var viewer = req.headers["token"];
 
     let resp = await UserModel.findOne({ emailAddress: emailAddress });
     console.log("resp", resp);
-    try{
-    if (resp) {
-      if (resp.profile.emailAddress) {
-        console.log("user found", resp);
-        let viewerDetails = await UserModel.findOne({ token: viewer });
+    try {
+      if (resp) {
+        if (resp.profile.emailAddress) {
+          console.log("user found", resp);
+          let viewerDetails = await UserModel.findOne({ token: viewer });
 
-        let followedAccounts = await FollowModel.find({
-          followerId: viewerDetails.id,
-          followId: resp.id
-        });
-
-        console.log("followedAccounts", followedAccounts);
-        var newSocialMedia = [];
-        if (followedAccounts.length >= 1) {
-          newSocialMedia = resp.profile.socialMediaAccount;
-          followedAccounts.map(accnt => {
-            newSocialMedia[accnt.accountType].username =
-              resp.profile.socialMediaAccount[accnt.accountType].username;
-            newSocialMedia[accnt.accountType].link =
-              resp.profile.socialMediaAccount[accnt.accountType].link;
-
-            newSocialMedia[accnt.accountType][
-              `linkedTo${accnt.accountType}`
-            ] = true;
+          let followedAccounts = await FollowModel.find({
+            followerId: viewerDetails.id,
+            followId: resp.id
           });
-          console.log("final array", newSocialMedia);
-        } else {
-          newSocialMedia = resp.profile.socialMediaAccount;
-        }
 
-        let profileDetails = {
-          id: resp._id,
-          firstName: resp.firstName,
-          lastName: resp.lastName,
-          age: resp.profile.age,
-          phoneNumber: resp.profile.phoneNumber,
-          emailAddress: resp.profile.emailAddress,
-          address: resp.profile.address,
-          profession: resp.profile.profession,
-          profilePicturePath: resp.profile.profilePicturePath,
-          gender: resp.profile.gender,
-          socialMediaAccount: newSocialMedia,
-          publicAccount: resp.profile.publicAccount,
-          createdAt: resp.profile.createdAt,
-          updatedAt: resp.profile.updatedAt
-        };
+          console.log("followedAccounts", followedAccounts);
+          var newSocialMedia = [];
+          if (followedAccounts.length >= 1) {
+            newSocialMedia = resp.profile.socialMediaAccount;
+            followedAccounts.map(accnt => {
+              newSocialMedia[accnt.accountType].username =
+                resp.profile.socialMediaAccount[accnt.accountType].username;
+              newSocialMedia[accnt.accountType].link =
+                resp.profile.socialMediaAccount[accnt.accountType].link;
 
-        var activityObj = {
-          type: "view",
-          firstName: viewerDetails.firstName,
-          profilePicturePath: viewerDetails.profile.profilePicturePath,
-          emailAddress: viewerDetails.profile.emailAddress,
-          address: viewerDetails.profile.address,
-          time: moment(new Date()).format("LT"),
-          text: `${viewerDetails.firstName} viewed your profile`,
-          status: false
-        };
-        await notification(resp.id, activityObj);
-
-        let count1 = await getCount(viewerDetails.id);
-
-        nsp.emit(`/${viewerDetails.id}`, {
-          id: viewerDetails.id,
-          count: count1
-        });
-
-        let count2 = await getCount(resp.id);
-
-        nsp.emit(`/${resp.id}`, { id: resp.id, count: count2 });
-
-        return res.json({
-          status: 200,
-          message: "profile fetched successfully",
-          response: {
-            profileDetails: profileDetails
+              newSocialMedia[accnt.accountType][
+                `linkedTo${accnt.accountType}`
+              ] = true;
+            });
+            console.log("final array", newSocialMedia);
+          } else {
+            newSocialMedia = resp.profile.socialMediaAccount;
           }
-        });
-      } else if (!resp.profile.emailAddress) {
+
+          let profileDetails = {
+            id: resp._id,
+            firstName: resp.firstName,
+            lastName: resp.lastName,
+            age: resp.profile.age,
+            phoneNumber: resp.profile.phoneNumber,
+            emailAddress: resp.profile.emailAddress,
+            address: resp.profile.address,
+            profession: resp.profile.profession,
+            profilePicturePath: resp.profile.profilePicturePath,
+            gender: resp.profile.gender,
+            socialMediaAccount: newSocialMedia,
+            publicAccount: resp.profile.publicAccount,
+            createdAt: resp.profile.createdAt,
+            updatedAt: resp.profile.updatedAt
+          };
+
+          var activityObj = {
+            type: "view",
+            firstName: viewerDetails.firstName,
+            profilePicturePath: viewerDetails.profile.profilePicturePath,
+            emailAddress: viewerDetails.profile.emailAddress,
+            address: viewerDetails.profile.address,
+            time: moment(new Date()).format("LT"),
+            text: `${viewerDetails.firstName} viewed your profile`,
+            status: false
+          };
+          await notification(resp.id, activityObj);
+
+          let count1 = await getCount(viewerDetails.id);
+
+          nsp.emit(`/${viewerDetails.id}`, {
+            id: viewerDetails.id,
+            count: count1
+          });
+
+          let count2 = await getCount(resp.id);
+
+          nsp.emit(`/${resp.id}`, { id: resp.id, count: count2 });
+
+          return res.json({
+            status: 200,
+            message: "profile fetched successfully",
+            response: {
+              profileDetails: profileDetails
+            }
+          });
+        } else if (!resp.profile.emailAddress) {
+          console.log("This profile doesnot exists");
+          return res.json({
+            status: 400,
+            authorization: false,
+            message: "This profile doesnot exists"
+          });
+        }
+      }
+    } catch (err) {
+      console.log("error while fetching profile", err);
+      return res.json({
+        status: 404,
+        message: "error while fetching profile"
+      });
+    }
+  });
+
+  router.put("/deleteProfileLink", async function(req, res) {
+    var socialmediaaccountId = req.body.socialmediaaccountId;
+
+    var emailAddress = req.body.emailAddress;
+    emailAddress = toUpper(emailAddress);
+    var user = await UserModel.findOne({ emailAddress: emailAddress });
+
+    try {
+      if (user.profile.emailAddress) {
+        user.profile.socialMediaAccount[socialmediaaccountId].username = "";
+        user.profile.socialMediaAccount[socialmediaaccountId].link = "";
+        user.profile.socialMediaAccount[socialmediaaccountId].linked = false;
+        let updatedProfile = {
+          ...user.profile,
+          socialMediaAccount: { ...user.profile.socialMediaAccount }
+        };
+
+        var update = await UserModel.findOneAndUpdate(
+          { emailAddress: emailAddress },
+          { $set: { updatedAt: new Date(), profile: updatedProfile } }
+        );
+
+        if (update) {
+          console.log("update", update);
+          console.log(`socialMediaAccount ${socialmediaaccountId} deleted`);
+          return res.json({
+            status: 200,
+            message: `socialMediaAccount ${socialmediaaccountId} deleted`,
+            response: {
+              ...updatedProfile,
+              firstName: update.firstName,
+              lastName: update.lastName
+            }
+          });
+        } else if (err) {
+          console.log(
+            `error in deleting socialMediaAccount ${socialmediaaccountId}`
+          );
+          return res.json({
+            status: 400,
+            message: `error in deleting socialMediaAccount ${socialmediaaccountId}`
+          });
+        }
+      } else if (!user.profile.emailAddress) {
         console.log("This profile doesnot exists");
         return res.json({
           status: 400,
@@ -392,68 +475,7 @@ module.exports = function(socket, nsp) {
           message: "This profile doesnot exists"
         });
       }
-    }
-  } catch(err){
-    console.log('error while fetching profile',err)
-    return res.json({
-      status: 404,
-      message: "error while fetching profile"
-    });
-  }
-  });
-
-  router.put("/deleteProfileLink", async function(req, res) {
-    var socialmediaaccountId = req.body.socialmediaaccountId;
-
-    var emailAddress = req.body.emailAddress;
-
-    var user = await UserModel.findOne({ emailAddress: emailAddress });
-   
-try{
-    if (user.profile.emailAddress) {
-      user.profile.socialMediaAccount[socialmediaaccountId].username = "";
-      user.profile.socialMediaAccount[socialmediaaccountId].link = "";
-      user.profile.socialMediaAccount[socialmediaaccountId].linked = false;
-      let updatedProfile = {
-        ...user.profile,
-        socialMediaAccount: { ...user.profile.socialMediaAccount }
-      };
-
-      var update = await UserModel.findOneAndUpdate(
-        { emailAddress: emailAddress },
-        { $set: { updatedAt: new Date(), profile: updatedProfile } }
-      );
-
-      if (update) {
-        console.log("update", update);
-        console.log(`socialMediaAccount ${socialmediaaccountId} deleted`);
-        return res.json({
-          status: 200,
-          message: `socialMediaAccount ${socialmediaaccountId} deleted`,
-          response: {
-            ...updatedProfile,
-            firstName: update.firstName,
-            lastName: update.lastName
-          }
-        });
-      } else if (err) {
-        console.log(
-          `error in deleting socialMediaAccount ${socialmediaaccountId}`
-        );
-        return res.json({
-          status: 400,
-          message: `error in deleting socialMediaAccount ${socialmediaaccountId}`
-        });
-      }
-    } else if (!user.profile.emailAddress) {
-      console.log("This profile doesnot exists");
-      return res.json({
-        status: 400,
-        authorization: false,
-        message: "This profile doesnot exists"
-      });
-    }
-   } catch (err) {
+    } catch (err) {
       console.log("error in finding user", err);
       return res.json({
         status: 404,
@@ -463,8 +485,10 @@ try{
   });
 
   router.put("/accountPrivacy", async function(req, res) {
+    let emailAddress = req.body.emailAddress;
+    emailAddress = toUpper(emailAddress);
     let update = await UserModel.findOneAndUpdate(
-      { emailAddress: req.body.emailAddress },
+      { emailAddress: emailAddress },
       {
         $set: {
           "profile.updatedAt": new Date(),
@@ -488,7 +512,7 @@ try{
         });
       }
     } catch (err) {
-      console.log('account privacy not changed',err);
+      console.log("account privacy not changed", err);
       res.json({
         status: 400,
         message: "account privacy not changed"

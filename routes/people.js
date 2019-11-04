@@ -8,6 +8,10 @@ var routeAuthentication = require("../middleware/authentication");
 router.use(routeAuthentication);
 var moment = require("moment");
 
+function toUpper(word) {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
 module.exports = function(socket, nsp) {
   router.post("/getSurroundingPeople", async function(req, res) {
     var token = req.headers["token"];
@@ -183,6 +187,9 @@ module.exports = function(socket, nsp) {
     var token = req.headers["token"];
     var { ageFilter, genderFilter, timeFilter, firstNameFilter } = req.body;
 
+    genderFilter = toUpper(genderFilter);
+    firstNameFilter = toUpper(firstNameFilter);
+
     var getUser = await UserModel.findOne({ token: token });
     let search = Filters(ageFilter, genderFilter, timeFilter, firstNameFilter);
     console.log(search);
@@ -217,7 +224,8 @@ module.exports = function(socket, nsp) {
   router.post("/refineConnectPeople/:id", async function(req, res) {
     var { ageFilter, genderFilter, timeFilter, firstNameFilter } = req.body;
     var { id } = req.params;
-
+    genderFilter = toUpper(genderFilter);
+    firstNameFilter = toUpper(firstNameFilter);
     let search = Filters(ageFilter, genderFilter, timeFilter, firstNameFilter);
 
     let filterConenctions = await ConnectionModel.aggregate([

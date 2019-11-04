@@ -9,6 +9,7 @@ var saltRounds = 10
 
 router.post("/login", function(req, res, next) {
   let { emailAddress, password } = req.body;
+  emailAddress = toUpper(emailAddress)
   UserModel.find({ emailAddress: emailAddress }, function(err, user) {
     if (user.length == 1 && user[0].emailAddress == emailAddress) {
       let checkpassword = user[0].password;
@@ -69,6 +70,12 @@ router.post("/login", function(req, res, next) {
 
 router.post("/register", function(req, res) {
   let { firstName, lastName, password, emailAddress } = req.body;
+
+  firstName = toUpper(firstName)
+  lastName = toUpper(lastName)
+  emailAddress = toUpper(emailAddress)
+console.log(firstName,lastName,emailAddress)
+
   var salt = bcrypt.genSaltSync(saltRounds);
   var hash = bcrypt.hashSync(password, salt);
 
@@ -83,8 +90,8 @@ router.post("/register", function(req, res) {
       var token = jwt.sign({emailAddress: emailAddress}, config.Secret)
 
       var User = new UserModel({
-        firstName: firstName.toLowerCase(),
-        lastName: lastName.toLowerCase(),
+        firstName: firstName,
+        lastName: lastName,
         emailAddress: emailAddress,
         password: hash,
         token: token,
@@ -120,5 +127,10 @@ router.post("/register", function(req, res) {
     }
   });
 });
+
+function toUpper(word) 
+{
+    return word.charAt(0).toUpperCase() + word.slice(1);
+}
 
 module.exports = router;

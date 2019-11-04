@@ -66,14 +66,14 @@ module.exports = {
               date: moment(newMessage.date).format("YYYY-MM-DD hh:mm:ss")
             }
           };
-           if (newconversation == true) {
+          if (newconversation == true) {
             var senderInbox = await getInbox(newMessage.senderId);
             console.log("sendinbox", senderInbox);
 
             var recieverInbox = await getInbox(newMessage.recieverId);
             console.log("recieverInbox", recieverInbox);
           }
- 
+
           nsp.emit("recieve_message", message);
 
           let sender = await UserModel.findById(msg.senderId);
