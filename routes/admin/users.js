@@ -3,24 +3,32 @@ var router = express.Router();
 var UserModel = require("../../models/User");
 
 router.get("/getUsers", async function(req, res) {
-  var users = await UserModel.find();
-  if (users) {
+  try {
+    var users = await UserModel.find();
+    if (users) {
+      res.json({
+        status: 200,
+        message: "users fetched successfully",
+        response: users
+      });
+    } else {
+      res.json({
+        status: 400,
+        message: "no users"
+      });
+    }
+  } catch (err) {
     res.json({
-      status: 200,
-      message: "users fetched successfully",
-      response: users
-    });
-  } else {
-    res.json({
-      status: 400,
-      message: "no users"
+      status: 404,
+      message: "error while fetching users"
     });
   }
 });
 
 router.put("/deleteUser/:id", async function(req, res) {
+    try{
   var { id } = req.params;
-console.log('sf',id)
+  console.log("sf", id);
   let user = await UserModel.findOneAndUpdate(
     { _id: id },
     { $set: { status: "deactive" } }
@@ -28,7 +36,22 @@ console.log('sf',id)
 
   if (user) {
     console.log("user deactivated");
+    res.json({
+      status: 200,
+      message: "user deactivated sucessfully"
+    });
+  } else {
+    res.json({
+      status: 400,
+      message: "user not deactivated "
+    });
   }
+} catch(err){
+    res.json({
+        status: 404,
+        message: "error while deactivating user"
+      });
+}
 });
 
 module.exports = router;

@@ -52,6 +52,7 @@ module.exports = function(socket, nsp) {
       },
       async function(err, response) {
         if (response) {
+          console.log('response',response)
           let modified_response = [];
           let alreadyFriend = false;
 

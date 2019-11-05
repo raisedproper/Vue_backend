@@ -10,8 +10,10 @@ var saltRounds = 10;
 router.post("/login", function(req, res, next) {
   let { emailAddress, password } = req.body;
   emailAddress = toUpper(emailAddress);
+
   UserModel.find({ emailAddress: emailAddress }, function(err, user) {
-    if (user.length == 1 && user[0].emailAddress == emailAddress) {
+    console.log('user',user)
+    if (user.length == 1 && user[0].emailAddress == emailAddress && user[0].status == 'active') {
       let checkpassword = user[0].password;
       let profileImage = {
         profilePicturePath: user[0].profile.profilePicturePath
@@ -55,6 +57,11 @@ router.post("/login", function(req, res, next) {
           message: "password is invalid"
         });
       }
+    } else if (user.length == 1 && user[0].emailAddress == emailAddress && user[0].status == 'deactive') {
+      res.json({
+        status: 402,
+        message: "user deactivated by admin"
+      });
     } else if (user.length == 0) {
       console.log("user doesnot exist");
       res.json({

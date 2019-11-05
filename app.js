@@ -4,6 +4,8 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var mongoose = require("mongoose");
+var cors = require('cors')
+
 const { mongooseAssociation } = require("mongoose-association");
 mongooseAssociation(mongoose);
 var io = require("socket.io")(3002);
@@ -37,7 +39,7 @@ mongoose.connect("mongodb://127.0.0.1:27017/mongodb", {
 mongoose.set("useFindAndModify", false);
 
 var app = express();
-
+app.use(cors())
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
 app.engine("html", require("ejs").renderFile);

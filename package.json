@@ -9,6 +9,7 @@
     "@sendgrid/mail": "^6.4.0",
     "bcrypt": "^3.0.6",
     "cookie-parser": "~1.4.4",
+    "cors": "^2.8.5",
     "debug": "~2.6.9",
     "ejs": "^2.7.1",
     "express": "^4.17.1",

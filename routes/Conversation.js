@@ -87,7 +87,6 @@ module.exports = function(socket, nsp) {
           id: recieverId,
           count: count2
         });
-
         console.log("conversation fetched successfully", response);
         res.json({
           status: 200,

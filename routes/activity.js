@@ -108,7 +108,7 @@ module.exports = function(socket, nsp) {
       } else {
         res.json({
           status: 400,
-          message: "no notifications"
+          message: "There are no activities!"
         });
       }
     } catch (err) {
