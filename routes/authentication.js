@@ -5,27 +5,30 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 var config = require("../config");
 
-var saltRounds = 10
+var saltRounds = 10;
 
 router.post("/login", function(req, res, next) {
   let { emailAddress, password } = req.body;
-  emailAddress = toUpper(emailAddress)
+  emailAddress = toUpper(emailAddress);
   UserModel.find({ emailAddress: emailAddress }, function(err, user) {
     if (user.length == 1 && user[0].emailAddress == emailAddress) {
       let checkpassword = user[0].password;
-      let profileImage = {profilePicturePath: user[0].profile.profilePicturePath}
+      let profileImage = {
+        profilePicturePath: user[0].profile.profilePicturePath
+      };
+      console.log(password,checkpassword)
       let result = bcrypt.compareSync(password, checkpassword);
       if (result == true) {
         console.log(user[0].token);
 
-        var token = jwt.sign({emailAddress: emailAddress}, config.Secret)
+        var token = jwt.sign({ emailAddress: emailAddress }, config.Secret);
         console.log("new token", token);
         UserModel.updateOne(
           { emailAddress: emailAddress },
-          { $set: { token: token,updatedAt: new Date() } },
+          { $set: { token: token, updatedAt: new Date() } },
           function(err, resp) {
             if (resp) {
-              console.log("token updated",);
+              console.log("token updated");
               var response = {
                 status: 200,
                 message: "login successfully",
@@ -71,10 +74,10 @@ router.post("/login", function(req, res, next) {
 router.post("/register", function(req, res) {
   let { firstName, lastName, password, emailAddress } = req.body;
 
-  firstName = toUpper(firstName)
-  lastName = toUpper(lastName)
-  emailAddress = toUpper(emailAddress)
-console.log(firstName,lastName,emailAddress)
+  firstName = toUpper(firstName);
+  lastName = toUpper(lastName);
+  emailAddress = toUpper(emailAddress);
+  console.log(firstName, lastName, emailAddress);
 
   var salt = bcrypt.genSaltSync(saltRounds);
   var hash = bcrypt.hashSync(password, salt);
@@ -87,13 +90,14 @@ console.log(firstName,lastName,emailAddress)
         message: "users already exists"
       });
     } else if (result.length == 0) {
-      var token = jwt.sign({emailAddress: emailAddress}, config.Secret)
+      var token = jwt.sign({ emailAddress: emailAddress }, config.Secret);
 
       var User = new UserModel({
         firstName: firstName,
         lastName: lastName,
         emailAddress: emailAddress,
         password: hash,
+        status: 'active',
         token: token,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -111,9 +115,10 @@ console.log(firstName,lastName,emailAddress)
           res.json({
             status: 200,
             message: "user registered successfully",
-            response: {token: resp.token,
-            emailAddress: resp.emailAddress,
-            id: resp._id
+            response: {
+              token: resp.token,
+              emailAddress: resp.emailAddress,
+              id: resp._id
             }
           });
         }
@@ -128,9 +133,8 @@ console.log(firstName,lastName,emailAddress)
   });
 });
 
-function toUpper(word) 
-{
-    return word.charAt(0).toUpperCase() + word.slice(1);
+function toUpper(word) {
+  return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
 module.exports = router;

@@ -27,6 +27,10 @@ var followRouter = require("./routes/follow");
 var activityRouter = require("./routes/activity");
 var indexRouter = require("./routes/index");
 
+//admin
+var adminAuthenticationRouter = require("./routes/admin/authentication");
+var adminUserRouter = require("./routes/admin/users");
+
 mongoose.connect("mongodb://127.0.0.1:27017/mongodb", {
   useNewUrlParser: true
 });
@@ -53,6 +57,10 @@ app.use("/profile", profileRouter(soc, nsp));
 app.use("/conversation", conversationRouter(soc, nsp));
 app.use("/follow", followRouter(soc, nsp));
 app.use("/activity", activityRouter(soc, nsp));
+
+//admin routes
+app.use("/admin", adminAuthenticationRouter);
+app.use("/admin/user", adminUserRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

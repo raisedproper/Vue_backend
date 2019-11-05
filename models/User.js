@@ -6,6 +6,7 @@ var userSchema = new mongoose.Schema({
         firstName: String,
         lastName: String,
         token: String,
+        status: String,
         createdAt: Date,
         updatedAt: Date,
         friends: [{ type: Schema.Types.ObjectId, ref: 'People' }],
