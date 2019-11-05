@@ -28,7 +28,7 @@ router.get("/getUsers", async function(req, res) {
 router.put("/deleteUser/:id", async function(req, res) {
     try{
   var { id } = req.params;
-  console.log("sf", id);
+  
   let user = await UserModel.findOneAndUpdate(
     { _id: id },
     { $set: { status: "deactive" } }
