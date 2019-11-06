@@ -123,11 +123,19 @@ module.exports = function(socket, nsp) {
               }
             }
           }
+          if(modified_response.length == 0){
+            return res.json({
+              status: 200,
+              message: "no people found",
+              response: modified_response
+            });
+          } else {
           return res.json({
             status: 200,
             message: "people list fetched successfully",
             response: modified_response
           });
+        }
         } else if (err) {
           console.log("error getting all users", err);
           return res.json({
