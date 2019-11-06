@@ -16,7 +16,8 @@ module.exports = function(socket, nsp) {
   router.post("/getSurroundingPeople", async function(req, res) {
     var token = req.headers["token"];
     UserModel.createIndexes();
-    var { currentlocation, startTime } = req.body;
+    var {  startTime } = req.body;
+    var currentlocation = [ -118.24685667853925, 33.905806017061174 ]
     let location = {
       coordinates: currentlocation,
       type: "Point"
