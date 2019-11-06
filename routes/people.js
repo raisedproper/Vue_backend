@@ -22,7 +22,7 @@ module.exports = function(socket, nsp) {
       type: "Point"
     };
     var userId;
-    let updatedUser = await UserModel.findOneAndUpdate(
+   /*  let updatedUser = await UserModel.findOneAndUpdate(
       { token: token },
       { $set: { location: location, updatedAt: new Date() } },
       { new: true }
@@ -32,7 +32,7 @@ module.exports = function(socket, nsp) {
       console.log("location of user updated");
     } else {
       console.log("location of user not updated");
-    }
+    } */
 
     let radius = 91.44;
     startTime = moment(startTime).format("YYYY-MM-DD HH:mm:ss");
@@ -185,6 +185,7 @@ module.exports = function(socket, nsp) {
   }
 
   router.post("/refineSearchPeople", async function(req, res) {
+    try {
     var token = req.headers["token"];
     var { ageFilter, genderFilter, timeFilter, firstNameFilter } = req.body;
 
@@ -205,7 +206,7 @@ module.exports = function(socket, nsp) {
       modified_result.push(obj.active);
     });
 
-    try {
+    
       if (connections) {
         res.json({
           status: 200,
@@ -223,6 +224,7 @@ module.exports = function(socket, nsp) {
   });
 
   router.post("/refineConnectPeople/:id", async function(req, res) {
+    try {
     var { ageFilter, genderFilter, timeFilter, firstNameFilter } = req.body;
     var { id } = req.params;
     genderFilter = toUpper(genderFilter);
@@ -240,7 +242,6 @@ module.exports = function(socket, nsp) {
       modified_response.push(obj.active);
     });
 
-    try {
       if (filterConenctions) {
         res.json({
           status: 200,

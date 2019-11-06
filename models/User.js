@@ -1,5 +1,7 @@
 var mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+var mongoosePaginate = require('mongoose-paginate');
+
 var userSchema = new mongoose.Schema({
         emailAddress: String,
         password: String,
@@ -37,7 +39,7 @@ location: {
 },
 })
 
-
+userSchema.plugin(mongoosePaginate)
 userSchema.hasMany('People')
 userSchema.index({location: '2dsphere'});
 var UserModel = mongoose.model('User',userSchema);

@@ -11,13 +11,13 @@ router.use(routeAuthentication);
 
 module.exports = function(socket, nsp) {
 router.post("/followAccount", async function(req, res) {
+  try{
   var token = req.headers["token"];
   var { followerId, followId, accountType } = req.body;
 
   let follower = await UserModel.findById(followerId);
   let follow = await UserModel.findById(followId);
 
-  try{
   if (follower && follow) {
     let response = await FollowModel.find({
       followerId: follower.id,

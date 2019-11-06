@@ -14,9 +14,9 @@ var AdminModel = require("../../models/Admin");
 router.post("/login", async function(req, res) {
     try {
   var { emailAddress, password } = req.body;
-  var salt = bcrypt.genSaltSync(10);
+ /*  var salt = bcrypt.genSaltSync(10);
   var hash = bcrypt.hashSync(password, salt);
-  console.log(hash);
+  console.log(hash); */
   emailAddress = toUpper(emailAddress);
 
     let admin = await AdminModel.findOne({ emailAddress: emailAddress });
@@ -59,7 +59,7 @@ router.post("/login", async function(req, res) {
       });
     }
   } catch (err) {
-    res.json({ status: 400, message: "error while logging in" });
+    res.json({ status: 404, message: "error while logging in" });
   }
 });
 
@@ -68,7 +68,7 @@ router.post("/forgetPassword", async function(req, res) {
     var { emailAddress } = req.body;
     emailAddress = toUpper(emailAddress);
     let user = await AdminModel.findOne({ emailAddress: emailAddress });
-    console.log(user);
+  
     const url = "http://localhost:3000/forgetPassword";
 
     var options = {
@@ -93,8 +93,7 @@ router.post("/forgetPassword", async function(req, res) {
       html: sendHtml
     };
     var mailer = nodemailer.createTransport(sgTransport(options));
-    console.log("mailOptions", mailOptions);
-
+    
     mailer.sendMail(mailOptions, function(err, info) {
       if (err) {
         console.log(err);
@@ -121,7 +120,7 @@ router.put("/resetPassword", async function(req, res) {
     emailAddress = toUpper(emailAddress);
     var salt = bcrypt.genSaltSync(10);
     var hash = bcrypt.hashSync(password, salt);
-    console.log('hash',hash)
+   
     let updatedUser = await AdminModel.findOneAndUpdate(
       { emailAddress: emailAddress },
       {

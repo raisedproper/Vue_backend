@@ -13,6 +13,7 @@ router.use(routeAuthentication);
 
 module.exports = function(socket, nsp) {
   router.post("/createFriend", async function(req, res) {
+    try {
     var token = req.headers["token"];
     const userId = req.body.userId;
     const friendId = req.body.friendId;
@@ -22,7 +23,6 @@ module.exports = function(socket, nsp) {
     let user2 = await UserModel.findById(friendId);
     console.log("user2", user2);
 
-    try {
       if (user1 && user2) {
         let people = await PeopleModel.findOne({
           user: user1.id,
@@ -132,6 +132,7 @@ module.exports = function(socket, nsp) {
   });
 
   router.put("/acceptfriend", async function(req, res) {
+    try {
     const friendId = req.body.friendId;
     const userId = req.body.userId;
 
@@ -147,7 +148,6 @@ module.exports = function(socket, nsp) {
       friend: friendId
     });
 
-    try {
       if (response && response2) {
         console.log("user found", response);
         if (response.status != "approved") {
@@ -253,13 +253,13 @@ module.exports = function(socket, nsp) {
   });
 
   router.put("/removeFriend/:id", async function(req, res) {
+    try {
     const friendId = req.params.id;
     var token = req.headers["token"];
 
     let user = await UserModel.findOne({ token: token });
     let friend = await UserModel.findOne({ id: friendId });
 
-    try {
       if (user) {
         let response = await PeopleModel.findOneAndRemove({
           user: user.id,

@@ -96,6 +96,7 @@ module.exports = function(socket, nsp) {
     req,
     res
   ) {
+    try {
     var token = req.headers["token"];
     var profilePicture = req.file ? req.file.filename : "";
 
@@ -113,7 +114,7 @@ module.exports = function(socket, nsp) {
       },
       { new: true }
     );
-    try {
+    
       if (resp) {
         console.log("image uploaded successfully", resp.profile);
         return res.json({
@@ -221,13 +222,13 @@ module.exports = function(socket, nsp) {
   });
 
   router.post("/addProfileLink", async function(req, res) {
+    try {
     let emailAddress = req.body.emailAddress;
     var profileLink = req.body.profileLink;
 
     emailAddress = toUpper(emailAddress);
 
     let user = await UserModel.findOne({ emailAddress: emailAddress });
-    try {
       if (user.profile.emailAddress) {
         console.log(user.profile.socialMediaAccount);
         console.log(profileLink.link);
@@ -287,10 +288,11 @@ module.exports = function(socket, nsp) {
   });
 
   router.get("/viewSelfProfile", async function(req, res) {
+    try {
     var token = req.headers["token"];
     let user = await UserModel.findOne({ token: token });
     console.log("user found", user);
-    try {
+
       if (user) {
         if (user.profile.emailAddress) {
           let profileDetails = {
@@ -324,13 +326,14 @@ module.exports = function(socket, nsp) {
   });
 
   router.post("/viewProfile", async function(req, res) {
+    try {
     let emailAddress = req.body.emailAddress;
     emailAddress = toUpper(emailAddress);
     var viewer = req.headers["token"];
 
     let resp = await UserModel.findOne({ emailAddress: emailAddress });
     console.log("resp", resp);
-    try {
+
       if (resp) {
         if (resp.profile.emailAddress) {
           console.log("user found", resp);
@@ -426,13 +429,13 @@ module.exports = function(socket, nsp) {
   });
 
   router.put("/deleteProfileLink", async function(req, res) {
+    try {
     var socialmediaaccountId = req.body.socialmediaaccountId;
 
     var emailAddress = req.body.emailAddress;
     emailAddress = toUpper(emailAddress);
     var user = await UserModel.findOne({ emailAddress: emailAddress });
 
-    try {
       if (user.profile.emailAddress) {
         user.profile.socialMediaAccount[socialmediaaccountId].username = "";
         user.profile.socialMediaAccount[socialmediaaccountId].link = "";
@@ -486,6 +489,7 @@ module.exports = function(socket, nsp) {
   });
 
   router.put("/accountPrivacy", async function(req, res) {
+    try {
     let emailAddress = req.body.emailAddress;
     emailAddress = toUpper(emailAddress);
     let update = await UserModel.findOneAndUpdate(
@@ -498,7 +502,7 @@ module.exports = function(socket, nsp) {
       },
       { new: true }
     );
-    try {
+
       if (update.profile.emailAddress) {
         console.log("account privacy changed");
         res.json({

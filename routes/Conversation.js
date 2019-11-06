@@ -54,10 +54,10 @@ async function readInbox(sender, reciever) {
 
 module.exports = function(socket, nsp) {
   router.post("/getConversation", async function(req, res) {
+    try {
     var { recieverId, senderId } = req.body;
     let response = await findConversation(recieverId, senderId);
 
-    try {
       if (response.length > 0) {
         let read = await ChatModel.updateMany(
           {
@@ -110,6 +110,7 @@ module.exports = function(socket, nsp) {
   });
 
   router.put("/deleteConversation", async function(req, res) {
+    try {
     var { recieverId, senderId, showToReceiver, showToSender } = req.body;
 
     let resp = await ChatModel.findOneAndUpdate(
@@ -124,7 +125,7 @@ module.exports = function(socket, nsp) {
       },
       { new: true }
     );
-    try {
+
       if (resp) {
         let inbox = await InboxModel.findOneAndUpdate(
           { userId: senderId },

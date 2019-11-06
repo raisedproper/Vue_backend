@@ -9,10 +9,10 @@ router.use(routeAuthentication);
 
 module.exports = function(socket, nsp) {
   router.get("/connections/:id", async (req, res) => {
+    try {
     var { id } = req.params;
     let friendss = await ConnectionModel.findOne({ userId: id });
 
-    try {
       if (friendss) {
         let updateSeen = friendss.active.map(friend => {
           friend.seen = true;
@@ -49,11 +49,9 @@ module.exports = function(socket, nsp) {
   });
 
   router.get("/inbox/:id", async function(req, res) {
-    var { id } = req.params;
-
-    var AllChats = await getInbox(id);
-
     try {
+    var { id } = req.params;
+    var AllChats = await getInbox(id);
       if (AllChats) {
         let count1 = await getCount(id);
         nsp.emit(`/${id}`, {
@@ -77,11 +75,9 @@ module.exports = function(socket, nsp) {
   });
 
   router.get("/notifications/:id", async function(req, res) {
-    var { id } = req.params;
-
-    let activity = await ActivityModel.findOne({ userId: id });
-
     try {
+    var { id } = req.params;
+    let activity = await ActivityModel.findOne({ userId: id });
       if (activity) {
         let readNotifications = await ActivityModel.updateMany(
           {
