@@ -16,14 +16,13 @@ module.exports = function(socket, nsp) {
   router.post("/getSurroundingPeople", async function(req, res) {
     var token = req.headers["token"];
     UserModel.createIndexes();
-    var {  startTime } = req.body;
-    var currentlocation = [ -118.24685667853925, 33.905806017061174 ]
+    var { currentlocation, startTime } = req.body;
     let location = {
       coordinates: currentlocation,
       type: "Point"
     };
     var userId;
-   /*  let updatedUser = await UserModel.findOneAndUpdate(
+    let updatedUser = await UserModel.findOneAndUpdate(
       { token: token },
       { $set: { location: location, updatedAt: new Date() } },
       { new: true }
@@ -33,7 +32,7 @@ module.exports = function(socket, nsp) {
       console.log("location of user updated");
     } else {
       console.log("location of user not updated");
-    } */
+    } 
 
     let radius = 91.44;
     startTime = moment(startTime).format("YYYY-MM-DD HH:mm:ss");
