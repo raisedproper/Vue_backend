@@ -20,6 +20,7 @@ Date.prototype.addHours = function(h) {
 router.post("/login", async function(req, res) {
   try {
     var { emailAddress, password } = req.body;
+    console.log(password)
     var salt = bcrypt.genSaltSync(10);
     var hash = bcrypt.hashSync(password, salt);
     console.log("hashed", hash);
