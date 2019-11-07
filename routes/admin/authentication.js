@@ -12,7 +12,6 @@ var sgTransport = require("nodemailer-sendgrid-transport");
 var AdminModel = require("../../models/Admin");
 var schedule = require('node-schedule');
 
-
 Date.prototype.addHours = function(h) {
   this.setTime(this.getTime() + (h*60*60*1000));
   return this;
@@ -83,7 +82,7 @@ router.post("/forgetPassword", async function(req, res) {
         .toString(36)
         .substring(2, 15);
 
-    const url = "http://localhost:3000/resetpassword?token=" + token;
+    const url = "http://krescentglobal.in:3000/resetpassword?token=" + token;
 
     var options = {
       auth: {
@@ -107,7 +106,7 @@ router.post("/forgetPassword", async function(req, res) {
       html: sendHtml
     };
     var mailer = nodemailer.createTransport(sgTransport(options));
-
+console.log('mailopetions',mailOptions)
     mailer.sendMail(mailOptions, async function(err, info) {
       if (err) {
         console.log(err);
