@@ -112,7 +112,7 @@ console.log('mailopetions',mailOptions)
         console.log(err);
         res.json({
           status: 400,
-          message: "error while sending email "
+          message: "error while sending email ",err
         });
       } else {
         console.log('token',token)
