@@ -10,6 +10,13 @@ var path = require("path");
 var Handlebars = require("handlebars");
 var sgTransport = require("nodemailer-sendgrid-transport");
 var AdminModel = require("../../models/Admin");
+var schedule = require('node-schedule');
+
+
+Date.prototype.addHours = function(h) {
+  this.setTime(this.getTime() + (h*60*60*1000));
+  return this;
+}
 
 router.post("/login", async function(req, res) {
   try {
@@ -109,16 +116,37 @@ router.post("/forgetPassword", async function(req, res) {
           message: "error while sending email "
         });
       } else {
+        console.log('token',token)
+
         let saveToken = await AdminModel.findOneAndUpdate(
           { emailAddress: emailAddress },
           {
-            $set: { resetToken: token }
-          }
+            $set: { resetToken: token, resetTime: new Date().addHours(12) }
+          },
+          {new: true}
         );
         if (saveToken) {
-          console.log("reset token saved");
+          console.log("reset token saved",saveToken);
         }
         console.log("Message sent: " + info.message);
+        // expire token
+       
+        var job = new schedule.Job(async function() {
+          console.log('nkkbn',saveToken)
+           var expireToken = await AdminModel.findOneAndUpdate(
+            { resetToken: saveToken.resetToken },
+            {
+              $set: {
+                resetToken: ""
+              }
+            }
+          );
+          if (expireToken) {
+            console.log("token invalidated");
+          } 
+        });
+
+        job.schedule(new Date(saveToken.resetTime));
         res.json({
           status: 200,
           message: "email sent sucessfully"
@@ -141,11 +169,11 @@ router.put("/resetPassword", async function(req, res) {
       {
         $set: {
           password: hash,
-          resetToken: ''
+          resetToken: ""
         }
       }
     );
-   
+
     if (updatedUser) {
       console.log("token invalidated");
       res.json({

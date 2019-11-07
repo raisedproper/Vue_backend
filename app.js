@@ -5,7 +5,7 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var mongoose = require("mongoose");
 var cors = require('cors');
-var getCount = require('./middleware/count')
+var getCount = require('./middleware/count');
 
 const { mongooseAssociation } = require("mongoose-association");
 mongooseAssociation(mongoose);
@@ -87,5 +87,6 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.send(err);
 });
+
 
 module.exports = app;

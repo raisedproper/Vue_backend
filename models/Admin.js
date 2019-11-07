@@ -6,7 +6,7 @@ var AdminSchema = new mongoose.Schema({
     name: String,
     token: String,
     resetToken: String,
-    resetTime: Number,
+    resetTime: Date,
     createdAt: Date,
     updatedAt: Date
   });
