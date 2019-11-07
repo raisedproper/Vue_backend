@@ -74,6 +74,8 @@ router.post("/forgetPassword", async function(req, res) {
     var { emailAddress } = req.body;
     emailAddress = toUpper(emailAddress);
     let user = await AdminModel.findOne({ emailAddress: emailAddress });
+    
+    if(user){
     let token =
       Math.random()
         .toString(36)
@@ -152,9 +154,12 @@ console.log('mailopetions',mailOptions)
         });
       }
     });
+  } else {
+    res.json({ status: 403, message: "user not found" });
+  }
   } catch (err) {
     console.log(err)
-    res.json({ status: 404, message: "error while sending email",err });
+    res.json({ status: 404, message: "error while sending email" });
   }
 });
 
