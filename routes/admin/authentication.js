@@ -22,7 +22,7 @@ router.post("/login", async function(req, res) {
     var { emailAddress, password } = req.body;
     var salt = bcrypt.genSaltSync(10);
     var hash = bcrypt.hashSync(password, salt);
-    console.log("hash", hash);
+    console.log("hashed", hash);
     emailAddress = toUpper(emailAddress);
 
     let admin = await AdminModel.findOne({ emailAddress: emailAddress });

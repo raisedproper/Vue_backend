@@ -4,7 +4,6 @@ var AdminSchema = new mongoose.Schema({
     emailAddress: String,
     password: String,
     name: String,
-    token: String,
     resetToken: String,
     resetTime: Date,
     createdAt: Date,
