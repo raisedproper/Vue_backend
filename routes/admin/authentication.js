@@ -153,6 +153,7 @@ console.log('mailopetions',mailOptions)
       }
     });
   } catch (err) {
+    console.log(err)
     res.json({ status: 404, message: "error while sending email",err });
   }
 });

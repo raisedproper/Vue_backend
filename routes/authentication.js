@@ -12,13 +12,16 @@ router.post("/login", function(req, res, next) {
   emailAddress = toUpper(emailAddress);
 
   UserModel.find({ emailAddress: emailAddress }, function(err, user) {
-    console.log('user',user)
-    if (user.length == 1 && user[0].emailAddress == emailAddress && user[0].status == 'active') {
+    if (
+      user.length == 1 &&
+      user[0].emailAddress == emailAddress &&
+      user[0].status == "active"
+    ) {
       let checkpassword = user[0].password;
       let profileImage = {
         profilePicturePath: user[0].profile.profilePicturePath
       };
-      console.log(password,checkpassword)
+      console.log(password, checkpassword);
       let result = bcrypt.compareSync(password, checkpassword);
       if (result == true) {
         console.log(user[0].token);
@@ -57,7 +60,11 @@ router.post("/login", function(req, res, next) {
           message: "password is invalid"
         });
       }
-    } else if (user.length == 1 && user[0].emailAddress == emailAddress && user[0].status == 'deactive') {
+    } else if (
+      user.length == 1 &&
+      user[0].emailAddress == emailAddress &&
+      user[0].status == "deactive"
+    ) {
       res.json({
         status: 402,
         message: "user deactivated by admin"
@@ -104,7 +111,7 @@ router.post("/register", function(req, res) {
         lastName: lastName,
         emailAddress: emailAddress,
         password: hash,
-        status: 'active',
+        status: "active",
         token: token,
         createdAt: new Date(),
         updatedAt: new Date()

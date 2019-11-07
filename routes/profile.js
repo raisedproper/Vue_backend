@@ -9,6 +9,7 @@ var moment = require("moment");
 var notification = require("../middleware/notification").getNotifications;
 var getCount = require("../middleware/count");
 var socialMediaAccount = [];
+var pushNotification = require('../middleware/pushNotification')
 
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -402,6 +403,8 @@ module.exports = function(socket, nsp) {
           let count2 = await getCount(resp.id);
 
           nsp.emit(`/${resp.id}`, { id: resp.id, count: count2 });
+          
+          pushNotification(resp.token,activityObj)
 
           return res.json({
             status: 200,
