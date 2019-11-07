@@ -3,17 +3,15 @@
   <body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
     <script>
-      const socket = io("http://krescentglobal.in:3002/chat");
+      const socket = io("http://localhost:3002/chat");
         socket.emit('send_message',{"senderId": "5dc14701cfe12d0f19be2fa5",
       "recieverId": "5dc14017fe60276004cfd403", "message":"hELLOOO"})  
       socket.on('recieve_message', (msg) => {
         console.log('recieve_message',msg)
       });  
-      /*  socket.on('activity', function(act){
-        console.log('activity',act)
-      }); */
+     
       socket.on('/5dc14701cfe12d0f19be2fa5',(val) => { console.log(val) })
-      
+      socket.emit('getId',{'id':'5dc16446d8a6e3698459241d'})
     </script>
   </body>
 </html>

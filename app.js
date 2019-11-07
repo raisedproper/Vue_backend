@@ -4,7 +4,8 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var mongoose = require("mongoose");
-var cors = require('cors')
+var cors = require('cors');
+var getCount = require('./middleware/count')
 
 const { mongooseAssociation } = require("mongoose-association");
 mongooseAssociation(mongoose);
@@ -14,7 +15,14 @@ const nsp = io.of("/chat");
 
 nsp.on("connection", function(socket) {
   console.log("socket connected");
-
+socket.on("getId",async (obj)=> {
+  let id = obj.id
+  let count = await getCount(id);
+  nsp.emit(`/${id}`, {
+    id: id,
+    count: count
+  });
+})
   soc = socket;
   require("./routes/socket").start(soc, nsp);
   require("./middleware/notification").start(soc, nsp);

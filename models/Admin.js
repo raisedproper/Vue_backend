@@ -5,6 +5,8 @@ var AdminSchema = new mongoose.Schema({
     password: String,
     name: String,
     token: String,
+    resetToken: String,
+    resetTime: Number,
     createdAt: Date,
     updatedAt: Date
   });

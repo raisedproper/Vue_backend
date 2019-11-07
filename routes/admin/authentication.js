@@ -12,12 +12,12 @@ var sgTransport = require("nodemailer-sendgrid-transport");
 var AdminModel = require("../../models/Admin");
 
 router.post("/login", async function(req, res) {
-    try {
-  var { emailAddress, password } = req.body;
- /*  var salt = bcrypt.genSaltSync(10);
-  var hash = bcrypt.hashSync(password, salt);
-  console.log(hash); */
-  emailAddress = toUpper(emailAddress);
+  try {
+    var { emailAddress, password } = req.body;
+    var salt = bcrypt.genSaltSync(10);
+    var hash = bcrypt.hashSync(password, salt);
+    console.log("hash", hash);
+    emailAddress = toUpper(emailAddress);
 
     let admin = await AdminModel.findOne({ emailAddress: emailAddress });
 
@@ -68,8 +68,15 @@ router.post("/forgetPassword", async function(req, res) {
     var { emailAddress } = req.body;
     emailAddress = toUpper(emailAddress);
     let user = await AdminModel.findOne({ emailAddress: emailAddress });
-  
-    const url = "http://localhost:3000/forgetPassword";
+    let token =
+      Math.random()
+        .toString(36)
+        .substring(2, 15) +
+      Math.random()
+        .toString(36)
+        .substring(2, 15);
+
+    const url = "http://localhost:3000/resetpassword?token=" + token;
 
     var options = {
       auth: {
@@ -89,12 +96,12 @@ router.post("/forgetPassword", async function(req, res) {
     var mailOptions = {
       from: "vue@gmail.com",
       to: emailAddress,
-      subject: "Welcome to Vue! Confirm your email",
+      subject: "Welcome to Vue! Reset your password.",
       html: sendHtml
     };
     var mailer = nodemailer.createTransport(sgTransport(options));
-    
-    mailer.sendMail(mailOptions, function(err, info) {
+
+    mailer.sendMail(mailOptions, async function(err, info) {
       if (err) {
         console.log(err);
         res.json({
@@ -102,6 +109,15 @@ router.post("/forgetPassword", async function(req, res) {
           message: "error while sending email "
         });
       } else {
+        let saveToken = await AdminModel.findOneAndUpdate(
+          { emailAddress: emailAddress },
+          {
+            $set: { resetToken: token }
+          }
+        );
+        if (saveToken) {
+          console.log("reset token saved");
+        }
         console.log("Message sent: " + info.message);
         res.json({
           status: 200,
@@ -116,21 +132,22 @@ router.post("/forgetPassword", async function(req, res) {
 
 router.put("/resetPassword", async function(req, res) {
   try {
-    var { emailAddress, password } = req.body;
-    emailAddress = toUpper(emailAddress);
+    var { token, password } = req.body;
     var salt = bcrypt.genSaltSync(10);
     var hash = bcrypt.hashSync(password, salt);
-   
+
     let updatedUser = await AdminModel.findOneAndUpdate(
-      { emailAddress: emailAddress },
+      { resetToken: token },
       {
         $set: {
-          password: hash
+          password: hash,
+          resetToken: ''
         }
       }
     );
-
+   
     if (updatedUser) {
+      console.log("token invalidated");
       res.json({
         status: 200,
         message: "password is successfully updated"
@@ -138,7 +155,7 @@ router.put("/resetPassword", async function(req, res) {
     } else {
       res.json({
         status: 400,
-        message: "password is not updated"
+        message: "token is invalid"
       });
     }
   } catch (err) {
