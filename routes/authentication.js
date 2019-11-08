@@ -10,6 +10,7 @@ var saltRounds = 10;
 router.post("/login", function(req, res, next) {
   let { emailAddress, password } = req.body;
   emailAddress = toUpper(emailAddress);
+  var fcmToken = req.headers["token"];
 
   UserModel.find({ emailAddress: emailAddress }, function(err, user) {
     if (
@@ -30,7 +31,7 @@ router.post("/login", function(req, res, next) {
         console.log("new token", token);
         UserModel.updateOne(
           { emailAddress: emailAddress },
-          { $set: { token: token, updatedAt: new Date() } },
+          { $set: { token: token,fcmToken: fcmToken, updatedAt: new Date() } },
           function(err, resp) {
             if (resp) {
               console.log("token updated");
@@ -87,7 +88,7 @@ router.post("/login", function(req, res, next) {
 
 router.post("/register", function(req, res) {
   let { firstName, lastName, password, emailAddress } = req.body;
-
+  var fcmToken = req.headers["token"];
   firstName = toUpper(firstName);
   lastName = toUpper(lastName);
   emailAddress = toUpper(emailAddress);
@@ -112,6 +113,7 @@ router.post("/register", function(req, res) {
         emailAddress: emailAddress,
         password: hash,
         status: "active",
+        fcmToken: fcmToken,
         token: token,
         createdAt: new Date(),
         updatedAt: new Date()

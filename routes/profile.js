@@ -404,7 +404,7 @@ module.exports = function(socket, nsp) {
 
           nsp.emit(`/${resp.id}`, { id: resp.id, count: count2 });
           
-          pushNotification(resp.token,activityObj)
+          pushNotification(resp.fcmToken,activityObj)
 
           return res.json({
             status: 200,

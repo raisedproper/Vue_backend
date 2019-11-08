@@ -4,13 +4,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
     <script>
       const socket = io("http://localhost:3002/chat");
-        socket.emit('send_message',{"senderId": "5dc14701cfe12d0f19be2fa5",
-      "recieverId": "5dc14017fe60276004cfd403", "message":"hELLOOO"})  
-      socket.on('recieve_message', (msg) => {
+        socket.emit('send_message',{"senderId": "5dc3a9a0fffa1c4aac819f61",
+      "recieverId": "5dc3a927355ba54704d0176b", "message":"jkjl"})  
+      socket.on('recieve_message/5dc3a927355ba54704d0176b', (msg) => {
         console.log('recieve_message',msg)
       });  
      
-      socket.on('/5dc14701cfe12d0f19be2fa5',(val) => { console.log(val) })
+      socket.on('/5dc3a927355ba54704d0176b',(val) => { console.log(val) })
       socket.emit('getId',{'id':'5dc16446d8a6e3698459241d'})
     </script>
   </body>

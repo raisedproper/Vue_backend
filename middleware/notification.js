@@ -72,10 +72,9 @@ async function updateNotification(id, activityObj) {
   if (find) {
     let notifications = await find.notifications.map(notification => {
       if (
-        notification.type == "view" &&
+        /* notification.type == "view" && */
         notification.emailAddress == activityObj.emailAddress
       ) {
-        console.log("get time", activityObj.time);
         notification.time = activityObj.time;
         notification.status = false;
       }

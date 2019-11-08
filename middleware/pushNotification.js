@@ -1,5 +1,5 @@
 var FCM = require('fcm-node');
-var serverKey="AIzaSyDhQ1BgOeiRkmEJeZuV3eLGa5lEiwdce1A";
+var serverKey = "AIzaSyDhQ1BgOeiRkmEJeZuV3eLGa5lEiwdce1A";
 var fcm = new FCM(serverKey);
 
 module.exports  = function(token,data){
@@ -8,7 +8,7 @@ module.exports  = function(token,data){
     var message = {
         to: token,
         notification: {
-          title: data.firstName,
+          title: data.firstName+ data.lastName,
           icon: data.profilePicturePath,
           body: data.text,
           time: data.time

@@ -5,6 +5,7 @@ var notification = require("../middleware/notification").getNotifications;
 var moment = require("moment");
 var getInbox = require("../middleware/inbox");
 var getCount = require("../middleware/count");
+var pushNotification = require("../middleware/pushNotification");
 
 module.exports = {
   start: function(soc, nsp) {
@@ -73,10 +74,11 @@ module.exports = {
             var recieverInbox = await getInbox(newMessage.recieverId);
             console.log("recieverInbox", recieverInbox);
           }
-
-          nsp.emit("recieve_message", message);
+          console.log(`recieve_message/${newMessage.recieverId}`);
+          nsp.emit(`recieve_message/${newMessage.recieverId}`, message);
 
           let sender = await UserModel.findById(msg.senderId);
+          let reciever = await UserModel.findById(msg.recieverId);
           var activityObj;
           if (sender) {
             console.log("gettime", moment(newMessage.date).format("LT"));
@@ -90,7 +92,7 @@ module.exports = {
               time: moment(newMessage.date).format("LT"),
               status: false
             };
-
+            console.log("activity", activityObj);
             await notification(newMessage.recieverId, activityObj);
             let count1 = await getCount(newMessage.recieverId);
             nsp.emit(`/${newMessage.recieverId}`, {
@@ -103,6 +105,8 @@ module.exports = {
               id: newMessage.senderId,
               count: count2
             });
+
+            pushNotification(reciever.fcmToken, activityObj);
           }
         }
       }

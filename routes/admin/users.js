@@ -4,8 +4,9 @@ var UserModel = require("../../models/User");
 
 router.get("/getUsers", async function(req, res) {
   try {
-    var {page,limit} = req.body
-  let pagination = await  UserModel.paginate({},{page:page,limit:limit})
+    var {page,limit} = req.query
+   console.log(page,limit)
+  let pagination = await  UserModel.paginate({},{page:page,limit:Number(limit)})
 
     if (pagination) {
       res.json({
@@ -20,6 +21,7 @@ router.get("/getUsers", async function(req, res) {
       });
     }
   } catch (err) {
+    console.log(err)
     res.json({
       status: 404,
       message: "error while fetching users"
