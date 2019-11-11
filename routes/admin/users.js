@@ -5,14 +5,20 @@ var UserModel = require("../../models/User");
 router.get("/getUsers", async function(req, res) {
   try {
     var {page,limit} = req.query
-   console.log(page,limit)
+   console.log(page,req.query)
+   if(page == undefined || page == ''){
+     page = 0
+   }
+   if(limit == undefined || limit == ''){
+     limit = 0
+   }
   let pagination = await  UserModel.paginate({},{page:page,limit:Number(limit)})
 
     if (pagination) {
       res.json({
         status: 200,
         message: "users fetched successfully",
-        response: pagination.docs
+        response: pagination
       });
     } else {
       res.json({

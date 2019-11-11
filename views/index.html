@@ -4,8 +4,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
     <script>
       const socket = io("http://localhost:3002/chat");
-        socket.emit('send_message',{"senderId": "5dc3a9a0fffa1c4aac819f61",
-      "recieverId": "5dc3a927355ba54704d0176b", "message":"jkjl"})  
+        socket.emit('send_message',{"senderId": "5dc53d06281d8b699faeeb83",
+      "recieverId": "5dc3a9a0fffa1c4aac819f61", "message":"jkjl"})  
       socket.on('recieve_message/5dc3a927355ba54704d0176b', (msg) => {
         console.log('recieve_message',msg)
       });  

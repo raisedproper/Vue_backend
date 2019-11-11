@@ -81,7 +81,7 @@ module.exports = function(socket, nsp) {
               firstName: friend1.firstName,
               profilePicturePath: friend1.profile.profilePicturePath,
               emailAddress: friend1.profile.emailAddress,
-              address: friend1.profile.address,
+              address: friend1.location.coordinates,
               type: "friendRequest",
               text: `${friend1.firstName} wants to connect`,
               time: moment(new Date()).format("LT"),
@@ -192,7 +192,7 @@ module.exports = function(socket, nsp) {
                 emailAddress: connection.profile.emailAddress,
                 type: "connection",
                 text: `${connection.firstName} accepted connection`,
-                address: connection.profile.address,
+                address: connection.location.coordinates,
                 time: moment(new Date()).format("LT"),
                 status: false
               };

@@ -9,11 +9,11 @@ var moment = require("moment");
 var notification = require("../middleware/notification").getNotifications;
 var getCount = require("../middleware/count");
 var socialMediaAccount = [];
-var pushNotification = require('../middleware/pushNotification')
+var pushNotification = require("../middleware/pushNotification");
+var schedule = require("node-schedule");
 
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    
     cb(null, "public/images");
   },
   filename: (req, file, cb) => {
@@ -81,16 +81,25 @@ function toUpper(word) {
   return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
-/* function getAge(dateString) {
+async function getAge(dateString) {
   var today = new Date();
   var birthDate = new Date(dateString);
   var age = today.getFullYear() - birthDate.getFullYear();
   var m = today.getMonth() - birthDate.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
+    age--;
   }
+  console.log(age);
   return age;
-} */
+}
+
+function add_years(dt, n) {
+  return new Date(dt.setFullYear(dt.getFullYear() + n));
+}
+Date.prototype.addHours = function(h) {
+  this.setTime(this.getTime() + h * 60 * 60 * 1000);
+  return this;
+};
 
 module.exports = function(socket, nsp) {
   router.post("/imageUpload", upload.single("profilePicture"), async function(
@@ -98,24 +107,24 @@ module.exports = function(socket, nsp) {
     res
   ) {
     try {
-    var token = req.headers["token"];
-    var profilePicture = req.file ? req.file.filename : "";
+      var token = req.headers["token"];
+      var profilePicture = req.file ? req.file.filename : "";
 
-    if (!profilePicture) {
-      console.log("profile picture is not uploaded");
-    }
+      if (!profilePicture) {
+        console.log("profile picture is not uploaded");
+      }
 
-    let resp = await UserModel.findOneAndUpdate(
-      { token: token },
-      {
-        $set: {
-          "profile.profilePicturePath": profilePicture,
-          "profile.updatedAt": new Date()
-        }
-      },
-      { new: true }
-    );
-    
+      let resp = await UserModel.findOneAndUpdate(
+        { token: token },
+        {
+          $set: {
+            "profile.profilePicturePath": profilePicture,
+            "profile.updatedAt": new Date()
+          }
+        },
+        { new: true }
+      );
+
       if (resp) {
         console.log("image uploaded successfully", resp.profile);
         return res.json({
@@ -139,9 +148,9 @@ module.exports = function(socket, nsp) {
     }
   });
 
-  router.post("/createprofile", function(req, res) {
+  router.post("/createprofile", async function(req, res) {
     var {
-      age,
+      dob,
       profession,
       phoneNumber,
       emailAddress,
@@ -152,7 +161,13 @@ module.exports = function(socket, nsp) {
     emailAddress = toUpper(emailAddress);
     address = toUpper(address);
     gender = toUpper(gender);
+    var d = dob.split("/")[0];
+    var m = dob.split("/")[1];
+    var y = dob.split("/")[2];
 
+    dob = `${m}/${d}/${y}`;
+    var age = await getAge(dob);
+    console.log("age", age);
     socialMediaAccount["gmail"].link = emailAddress;
     socialMediaAccount["gmail"].linked = true;
 
@@ -165,6 +180,7 @@ module.exports = function(socket, nsp) {
             phoneNumber: phoneNumber,
             address: address,
             age: age,
+            dob: dob,
             gender: gender,
             profession: profession,
             socialMediaAccount: socialMediaAccount,
@@ -182,6 +198,30 @@ module.exports = function(socket, nsp) {
             response
           ) {
             if (response) {
+              var job = new schedule.Job(async function() {
+                var users = await UserModel.find();
+                users.map(async user => {
+                  var newAge = await getAge(user.profile.dob);
+                  if (newAge) {
+                    var updateAge = await UserModel.findOneAndUpdate(
+                      { emailAddress: user.emailAddress },
+                      {
+                        $set: {
+                          "profile.age": newAge
+                        }
+                      }
+                    );
+                    if (updateAge) {
+                      console.log("age updated");
+                    }
+                  }
+                });
+              });
+              let getCurrentYear = moment().format("YYYY");
+              let year = new Date(`${getCurrentYear}-${m}-${d}`);
+              let time = add_years(year, 1);
+
+              job.schedule(new Date(time));
               console.log("profile created successfully", response);
               return res.json({
                 status: 200,
@@ -224,12 +264,12 @@ module.exports = function(socket, nsp) {
 
   router.post("/addProfileLink", async function(req, res) {
     try {
-    let emailAddress = req.body.emailAddress;
-    var profileLink = req.body.profileLink;
+      let emailAddress = req.body.emailAddress;
+      var profileLink = req.body.profileLink;
 
-    emailAddress = toUpper(emailAddress);
+      emailAddress = toUpper(emailAddress);
 
-    let user = await UserModel.findOne({ emailAddress: emailAddress });
+      let user = await UserModel.findOne({ emailAddress: emailAddress });
       if (user.profile.emailAddress) {
         console.log(user.profile.socialMediaAccount);
         console.log(profileLink.link);
@@ -290,9 +330,9 @@ module.exports = function(socket, nsp) {
 
   router.get("/viewSelfProfile", async function(req, res) {
     try {
-    var token = req.headers["token"];
-    let user = await UserModel.findOne({ token: token });
-    console.log("user found", user);
+      var token = req.headers["token"];
+      let user = await UserModel.findOne({ token: token });
+      console.log("user found", user);
 
       if (user) {
         if (user.profile.emailAddress) {
@@ -328,12 +368,12 @@ module.exports = function(socket, nsp) {
 
   router.post("/viewProfile", async function(req, res) {
     try {
-    let emailAddress = req.body.emailAddress;
-    emailAddress = toUpper(emailAddress);
-    var viewer = req.headers["token"];
+      let emailAddress = req.body.emailAddress;
+      emailAddress = toUpper(emailAddress);
+      var viewer = req.headers["token"];
 
-    let resp = await UserModel.findOne({ emailAddress: emailAddress });
-    console.log("resp", resp);
+      let resp = await UserModel.findOne({ emailAddress: emailAddress });
+      console.log("resp", resp);
 
       if (resp) {
         if (resp.profile.emailAddress) {
@@ -386,7 +426,7 @@ module.exports = function(socket, nsp) {
             firstName: viewerDetails.firstName,
             profilePicturePath: viewerDetails.profile.profilePicturePath,
             emailAddress: viewerDetails.profile.emailAddress,
-            address: viewerDetails.profile.address,
+            address: viewerDetails.location.coordinates,
             time: moment(new Date()).format("LT"),
             text: `${viewerDetails.firstName} viewed your profile`,
             status: false
@@ -403,8 +443,8 @@ module.exports = function(socket, nsp) {
           let count2 = await getCount(resp.id);
 
           nsp.emit(`/${resp.id}`, { id: resp.id, count: count2 });
-          
-          pushNotification(resp.fcmToken,activityObj)
+
+          pushNotification(resp.fcmToken, activityObj);
 
           return res.json({
             status: 200,
@@ -433,11 +473,11 @@ module.exports = function(socket, nsp) {
 
   router.put("/deleteProfileLink", async function(req, res) {
     try {
-    var socialmediaaccountId = req.body.socialmediaaccountId;
+      var socialmediaaccountId = req.body.socialmediaaccountId;
 
-    var emailAddress = req.body.emailAddress;
-    emailAddress = toUpper(emailAddress);
-    var user = await UserModel.findOne({ emailAddress: emailAddress });
+      var emailAddress = req.body.emailAddress;
+      emailAddress = toUpper(emailAddress);
+      var user = await UserModel.findOne({ emailAddress: emailAddress });
 
       if (user.profile.emailAddress) {
         user.profile.socialMediaAccount[socialmediaaccountId].username = "";
@@ -493,18 +533,18 @@ module.exports = function(socket, nsp) {
 
   router.put("/accountPrivacy", async function(req, res) {
     try {
-    let emailAddress = req.body.emailAddress;
-    emailAddress = toUpper(emailAddress);
-    let update = await UserModel.findOneAndUpdate(
-      { emailAddress: emailAddress },
-      {
-        $set: {
-          "profile.updatedAt": new Date(),
-          "profile.publicAccount": req.body.publicAccount
-        }
-      },
-      { new: true }
-    );
+      let emailAddress = req.body.emailAddress;
+      emailAddress = toUpper(emailAddress);
+      let update = await UserModel.findOneAndUpdate(
+        { emailAddress: emailAddress },
+        {
+          $set: {
+            "profile.updatedAt": new Date(),
+            "profile.publicAccount": req.body.publicAccount
+          }
+        },
+        { new: true }
+      );
 
       if (update.profile.emailAddress) {
         console.log("account privacy changed");

@@ -76,7 +76,7 @@ module.exports = {
           }
           console.log(`recieve_message/${newMessage.recieverId}`);
           nsp.emit(`recieve_message/${newMessage.recieverId}`, message);
-
+          nsp.emit(`recieve_message/${newMessage.senderId}`, message);
           let sender = await UserModel.findById(msg.senderId);
           let reciever = await UserModel.findById(msg.recieverId);
           var activityObj;
@@ -84,9 +84,9 @@ module.exports = {
             console.log("gettime", moment(newMessage.date).format("LT"));
             activityObj = {
               firstName: sender.firstName,
-              text: `${sender.firstName} sends you a message`,
+              text: `${sender.firstName} sent you a message`,
               type: "message",
-              address: `${sender.profile.address}`,
+              address: sender.location.coordinates,
               emailAddress: sender.profile.emailAddress,
               profilePicturePath: `${sender.profile.profilePicturePath}`,
               time: moment(newMessage.date).format("LT"),

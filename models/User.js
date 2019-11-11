@@ -15,6 +15,7 @@ var userSchema = new mongoose.Schema({
         friends: [{ type: Schema.Types.ObjectId, ref: 'People' }],
 
  profile: {
+    dob:String,
     age: Number,
     phoneNumber: String,
     emailAddress: String,

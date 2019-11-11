@@ -78,7 +78,7 @@ router.post("/followAccount", async function(req, res) {
             firstName: follower.firstName,
             emailAddress: follower.profile.emailAddress,
             profilePicturePath: follower.profile.profilePicturePath,
-            address: follower.profile.address,
+            address: follower.location.coordinates,
             type: accountType,
             text: `${follower.firstName} connected with you`,
             time: moment(new Date()).format("LT"),

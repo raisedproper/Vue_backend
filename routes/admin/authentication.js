@@ -109,7 +109,7 @@ router.post("/forgetPassword", async function(req, res) {
       html: sendHtml
     };
     var mailer = nodemailer.createTransport(sgTransport(options));
-console.log('mailopetions',mailOptions)
+
     mailer.sendMail(mailOptions, async function(err, info) {
       if (err) {
         console.log(err);
@@ -134,7 +134,7 @@ console.log('mailopetions',mailOptions)
         // expire token
        
         var job = new schedule.Job(async function() {
-          console.log('nkkbn',saveToken)
+          
            var expireToken = await AdminModel.findOneAndUpdate(
             { resetToken: saveToken.resetToken },
             {
