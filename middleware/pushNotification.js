@@ -2,13 +2,13 @@ var FCM = require('fcm-node');
 var serverKey = "AIzaSyDhQ1BgOeiRkmEJeZuV3eLGa5lEiwdce1A";
 var fcm = new FCM(serverKey);
 
-module.exports  = function(token,data){
+module.exports  = function(token,data,lastName){
     console.log('token',token);
     console.log(data)
     var message = {
         to: token,
         notification: {
-          title: data.firstName+ data.lastName,
+          title: data.firstName+''+ lastName,
           icon: data.profilePicturePath,
           body: data.text,
           time: data.time

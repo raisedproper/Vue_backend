@@ -110,7 +110,7 @@ module.exports = {
               count: count2
             });
 
-            pushNotification(reciever.fcmToken, activityObj);
+            pushNotification(reciever.fcmToken, activityObj,sender.lastName);
           }
         }
       }

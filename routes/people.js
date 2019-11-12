@@ -36,6 +36,8 @@ module.exports = function(socket, nsp) {
 
     let radius = 91.44;
     startTime = moment(startTime).format("YYYY-MM-DD HH:mm:ss");
+   let getUsers = await UserModel.find()
+  
     UserModel.find(
       {
         location: {
