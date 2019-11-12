@@ -192,51 +192,57 @@ module.exports = function(socket, nsp) {
             updatedAt: new Date()
           };
           let update = { user: resp, profile };
-
-          UserModel.update({ emailAddress: emailAddress }, update, function(
-            err,
-            response
-          ) {
-            if (response) {
-              var job = new schedule.Job(async function() {
-                var users = await UserModel.find();
-                users.map(async user => {
-                  var newAge = await getAge(user.profile.dob);
-                  if (newAge) {
-                    var updateAge = await UserModel.findOneAndUpdate(
-                      { emailAddress: user.emailAddress },
-                      {
-                        $set: {
-                          "profile.age": newAge
+          if (age) {
+            UserModel.update({ emailAddress: emailAddress }, update, function(
+              err,
+              response
+            ) {
+              if (response) {
+                var job = new schedule.Job(async function() {
+                  var users = await UserModel.find();
+                  users.map(async user => {
+                    var newAge = await getAge(user.profile.dob);
+                    if (newAge) {
+                      var updateAge = await UserModel.findOneAndUpdate(
+                        { emailAddress: user.emailAddress },
+                        {
+                          $set: {
+                            "profile.age": newAge
+                          }
                         }
+                      );
+                      if (updateAge) {
+                        console.log("age updated");
                       }
-                    );
-                    if (updateAge) {
-                      console.log("age updated");
                     }
-                  }
+                  });
                 });
-              });
-              let getCurrentYear = moment().format("YYYY");
-              let year = new Date(`${getCurrentYear}-${m}-${d}`);
-              let time = add_years(year, 1);
+                let getCurrentYear = moment().format("YYYY");
+                let year = new Date(`${getCurrentYear}-${m}-${d}`);
+                let time = add_years(year, 1);
 
-              job.schedule(new Date(time));
-              console.log("profile created successfully", response);
-              return res.json({
-                status: 200,
-                message: "Profile created successfully",
-                response: profile
-              });
-            } else {
-              console.log("user not updated", err);
-              return res.json({
-                status: 400,
-                message: "Profile not created",
-                emailAddress: resp.emailAddress
-              });
-            }
-          });
+                job.schedule(new Date(time));
+                console.log("profile created successfully", response);
+                return res.json({
+                  status: 200,
+                  message: "Profile created successfully",
+                  response: profile
+                });
+              } else {
+                console.log("user not updated", err);
+                return res.json({
+                  status: 400,
+                  message: "Profile not created",
+                  emailAddress: resp.emailAddress
+                });
+              }
+            });
+          } else {
+            return res.json({
+              status: 405,
+              message: "date of birth is incorrect"
+            });
+          }
         } else if (resp.profile.emailAddress == emailAddress) {
           return res.json({
             status: 202,
