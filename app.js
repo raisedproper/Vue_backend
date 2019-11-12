@@ -17,6 +17,7 @@ nsp.on("connection", function(socket) {
   console.log("socket connected");
 socket.on("getId",async (obj)=> {
   let id = obj.id
+
   let count = await getCount(id);
   nsp.emit(`/${id}`, {
     id: id,

@@ -3,6 +3,7 @@ var router = express.Router();
 var ChatModel = require("../models/Chat");
 var routeAuthentication = require("../middleware/authentication");
 var getCount = require("../middleware/count");
+var ConversationModel = require("../models/Conversation");
 var InboxModel = require("../models/Inbox");
 var mongoose = require("mongoose");
 
@@ -10,12 +11,21 @@ router.use(routeAuthentication);
 
 async function findConversation(recieverId, senderId) {
   var conversations = [];
+
+  let conversation = await ConversationModel.findOne({
+    $or: [
+      { senderId: senderId, recieverId: recieverId },
+      { senderId: recieverId, recieverId: senderId }
+    ]
+  });
+ 
   let response = await ChatModel.find({
     $or: [
       { senderId: senderId, recieverId: recieverId },
       { senderId: recieverId, recieverId: senderId }
     ]
   });
+ 
   if (response) {
     response.map(obj => {
       let object = {
@@ -25,7 +35,8 @@ async function findConversation(recieverId, senderId) {
       };
       conversations.push(object);
     });
-    return conversations;
+    let final = { conversationId: (conversation ? conversation.id: '') , chats: conversations };
+    return final;
   }
 }
 
@@ -55,10 +66,10 @@ async function readInbox(sender, reciever) {
 module.exports = function(socket, nsp) {
   router.post("/getConversation", async function(req, res) {
     try {
-    var { recieverId, senderId } = req.body;
-    let response = await findConversation(recieverId, senderId);
+      var { recieverId, senderId } = req.body;
+      let response = await findConversation(recieverId, senderId);
 
-      if (response.length > 0) {
+      if (response.chats.length > 0) {
         let read = await ChatModel.updateMany(
           {
             $or: [
@@ -93,11 +104,12 @@ module.exports = function(socket, nsp) {
           message: "conversation fetched successfully",
           response: response
         });
-      } else if (response.length == 0) {
+      } else if (response.chats.length == 0) {
         console.log("no conversation");
         res.json({
           status: 202,
-          message: "no conversation exists"
+          message: "no conversation exists",
+          response: response
         });
       }
     } catch (err) {
@@ -111,20 +123,20 @@ module.exports = function(socket, nsp) {
 
   router.put("/deleteConversation", async function(req, res) {
     try {
-    var { recieverId, senderId, showToReceiver, showToSender } = req.body;
+      var { recieverId, senderId, showToReceiver, showToSender } = req.body;
 
-    let resp = await ChatModel.findOneAndUpdate(
-      { senderId: senderId, recieverId: recieverId },
-      {
-        $set: {
-          chats: [],
-          showToSender: showToSender,
-          showToReceiver: showToReceiver,
-          updatedAt: new Date()
-        }
-      },
-      { new: true }
-    );
+      let resp = await ChatModel.findOneAndUpdate(
+        { senderId: senderId, recieverId: recieverId },
+        {
+          $set: {
+            chats: [],
+            showToSender: showToSender,
+            showToReceiver: showToReceiver,
+            updatedAt: new Date()
+          }
+        },
+        { new: true }
+      );
 
       if (resp) {
         let inbox = await InboxModel.findOneAndUpdate(
@@ -134,18 +146,19 @@ module.exports = function(socket, nsp) {
               chats: {
                 recieverId: mongoose.Types.ObjectId(recieverId)
               }
-            },
-          },{new: true}
+            }
+          },
+          { new: true }
         );
         if (inbox) {
-          console.log("conversation deleted from inbox",inbox);
+          console.log("conversation deleted from inbox", inbox);
 
           let count1 = await getCount(senderId);
           nsp.emit(`/${senderId}`, {
             id: senderId,
             count: count1
           });
-  
+
           let count2 = await getCount(recieverId);
           nsp.emit(`/${recieverId}`, {
             id: recieverId,

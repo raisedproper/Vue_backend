@@ -10,6 +10,7 @@ var pushNotification = require("../middleware/pushNotification");
 module.exports = {
   start: function(soc, nsp) {
     soc.on("send_message", async msg => {
+      console.log('message',msg)
       var conversationId;
       var newconversation = false;
       if (msg.recieverId) {
@@ -74,9 +75,12 @@ module.exports = {
             var recieverInbox = await getInbox(newMessage.recieverId);
             console.log("recieverInbox", recieverInbox);
           }
-          console.log(`recieve_message/${newMessage.recieverId}`);
-          nsp.emit(`recieve_message/${newMessage.recieverId}`, message);
-          nsp.emit(`recieve_message/${newMessage.senderId}`, message);
+         
+           console.log('conversation id',conversationId)
+          nsp.emit(`${newMessage.senderId}_${newMessage.recieverId}`, message); 
+          
+          nsp.emit(`${newMessage.recieverId}_${newMessage.senderId}`, message);
+         
           let sender = await UserModel.findById(msg.senderId);
           let reciever = await UserModel.findById(msg.recieverId);
           var activityObj;
