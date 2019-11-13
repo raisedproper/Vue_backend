@@ -32,7 +32,6 @@ var userSchema = new mongoose.Schema({
   location: {
     coordinates: {
       type: [Number],
-      /* index: "2dsphere" */
     },
     type: {
       type: String,
