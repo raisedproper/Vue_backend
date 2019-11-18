@@ -101,7 +101,7 @@ router.post("/register", function(req, res) {
     if (result.length >= 1) {
       console.log("users already exists", result[0].emailAddress);
       res.json({
-        status: 200,
+        status: 202,
         message: "users already exists"
       });
     } else if (result.length == 0) {
