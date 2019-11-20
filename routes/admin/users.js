@@ -49,7 +49,8 @@ router.put("/deleteUser/:id", async function(req, res) {
     console.log("user deactivated");
     res.json({
       status: 200,
-      message: "user deactivated sucessfully"
+      message: "user deactivated sucessfully",
+      response: status
     });
   } else {
     res.json({
@@ -67,7 +68,8 @@ router.put("/deleteUser/:id", async function(req, res) {
     console.log("user activated");
     res.json({
       status: 200,
-      message: "user activated sucessfully"
+      message: "user activated sucessfully",
+      response: status
     });
   } else {
     res.json({
