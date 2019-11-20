@@ -39,45 +39,25 @@ router.put("/deleteUser/:id", async function(req, res) {
     try{
   var { id } = req.params;
   var {status} = req.body
-  if(status == 'deactive'){
   let user = await UserModel.findOneAndUpdate(
     { _id: id },
-    { $set: { status: "deactive" } }
+    { $set: { status: status } }
   );
 
   if (user) {
     console.log("user deactivated");
     res.json({
       status: 200,
-      message: "user deactivated sucessfully",
+      message: `user ${status} sucessfully`,
       response: status
     });
   } else {
     res.json({
       status: 400,
-      message: "user not deactivated "
+      message: `user not ${status}`
     });
   }
-} else if(status == 'active'){
-  let user = await UserModel.findOneAndUpdate(
-    { _id: id },
-    { $set: { status: "active" } }
-  );
 
-  if (user) {
-    console.log("user activated");
-    res.json({
-      status: 200,
-      message: "user activated sucessfully",
-      response: status
-    });
-  } else {
-    res.json({
-      status: 400,
-      message: "user not activated "
-    });
-  }
-}
 } catch(err){
     res.json({
         status: 404,
