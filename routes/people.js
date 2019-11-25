@@ -35,8 +35,9 @@ module.exports = function(soc, nsp) {
 
     UserModel.createIndexes();
     let radius = 91.44;
-     startTime = moment(date()).format("YYYY-MM-DD HH:mm:ss");
 
+    let startTime = moment().format("YYYY-MM-DD HH:mm:ss");
+console.log('starttime',startTime)
     let response = await UserModel.find({
       location: {
         $nearSphere: {

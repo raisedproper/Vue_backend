@@ -31,7 +31,7 @@ router.post("/login", function(req, res, next) {
         console.log("new token", token);
         UserModel.updateOne(
           { emailAddress: emailAddress },
-          { $set: { token: token,fcmToken: fcmToken, updatedAt: new Date() } },
+          { $set: { token: token, fcmToken: fcmToken, updatedAt: new Date() } },
           function(err, resp) {
             if (resp) {
               console.log("token updated");
@@ -86,7 +86,7 @@ router.post("/login", function(req, res, next) {
   });
 });
 
-router.post("/register", function(req, res) {
+router.post("/register", async function(req, res) {
   let { firstName, lastName, password, emailAddress } = req.body;
   var fcmToken = req.headers["token"];
   firstName = toUpper(firstName);
@@ -97,56 +97,96 @@ router.post("/register", function(req, res) {
   var salt = bcrypt.genSaltSync(saltRounds);
   var hash = bcrypt.hashSync(password, salt);
 
-  UserModel.find({ emailAddress: emailAddress }, function(err, result) {
-    if (result.length >= 1) {
-      console.log("users already exists", result[0].emailAddress);
+  var token = jwt.sign({ emailAddress: emailAddress }, config.Secret);
+
+  let result = await UserModel.findOne({ emailAddress: emailAddress });
+  console.log(result);
+  if (result.profile.emailAddress == emailAddress) {
+    console.log("users already exists", result.emailAddress);
+    res.json({
+      status: 202,
+      message: "users already exists"
+    });
+  } else if (
+    !result.profile.emailAddress &&
+    result.emailAddress != emailAddress
+  ) {
+    var User = new UserModel({
+      firstName: firstName,
+      lastName: lastName,
+      emailAddress: emailAddress,
+      password: hash,
+      status: "active",
+      fcmToken: fcmToken,
+      token: token,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    User.save(function(err, resp) {
+      if (err) {
+        console.log("error while saving User", err);
+        res.json({
+          status: 400,
+          message: "user not saved"
+        });
+      } else {
+        console.log("User saved successfully");
+        res.json({
+          status: 200,
+          message: "user registered successfully",
+          response: {
+            token: resp.token,
+            emailAddress: resp.emailAddress,
+            id: resp._id
+          }
+        });
+      }
+    });
+  } else if (
+    !result.profile.emailAddress &&
+    result.emailAddress == emailAddress
+  ) {
+    let update = await UserModel.findOneAndUpdate(
+      { emailAddress: emailAddress },
+      {
+        $set: {
+          firstName: firstName,
+          lastName: lastName,
+          emailAddress: emailAddress,
+          password: hash,
+          status: "active",
+          fcmToken: fcmToken,
+          token: token,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    if(update){
+      console.log("User saved successfully");
       res.json({
-        status: 202,
-        message: "users already exists"
-      });
-    } else if (result.length == 0) {
-      var token = jwt.sign({ emailAddress: emailAddress }, config.Secret);
-
-      var User = new UserModel({
-        firstName: firstName,
-        lastName: lastName,
-        emailAddress: emailAddress,
-        password: hash,
-        status: "active",
-        fcmToken: fcmToken,
-        token: token,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-
-      User.save(function(err, resp) {
-        if (err) {
-          console.log("error while saving User", err);
-          res.json({
-            status: 400,
-            message: "user not saved"
-          });
-        } else {
-          console.log("User saved successfully");
-          res.json({
-            status: 200,
-            message: "user registered successfully",
-            response: {
-              token: resp.token,
-              emailAddress: resp.emailAddress,
-              id: resp._id
-            }
-          });
+        status: 200,
+        message: "user registered successfully",
+        response: {
+          token: update.token,
+          emailAddress: update.emailAddress,
+          id: update._id
         }
       });
     } else {
-      console.log("error while finding users", err);
       res.json({
         status: 400,
         message: "user not saved"
       });
     }
-  });
+  } else {
+    console.log("error while finding users", err);
+    res.json({
+      status: 400,
+      message: "user not saved"
+    });
+  }
 });
 
 function toUpper(word) {
