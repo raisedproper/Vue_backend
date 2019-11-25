@@ -4,6 +4,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
     <script>
     console.log('client')
+   var socket = io('http://localhost:3002/chat'); 
+     socket.emit('getSurroundingPeople',{userId: "5dd7ae7662e7850384d8506a",currentlocation: [76.847736, 30.723459],startTime: "2019-11-22 16:20:50"})
+   
+     socket.on('/5dd7aebf62e7850384d8506c', (obj) => {
+   console.log('test3',obj)
+    }) 
+     socket.on('/5dd7ae7662e7850384d8506a', (obj) => {
+   console.log('test2',obj)
+    })  
+    socket.on('/5dd7adb462e7850384d85068', (obj) => {
+   console.log('test1',obj)
+    })
     </script>
   </body>
 </html>

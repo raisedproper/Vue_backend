@@ -4,8 +4,8 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var mongoose = require("mongoose");
-var cors = require('cors');
-var getCount = require('./middleware/count');
+var cors = require("cors");
+var getCount = require("./middleware/count");
 
 const { mongooseAssociation } = require("mongoose-association");
 mongooseAssociation(mongoose);
@@ -15,15 +15,15 @@ const nsp = io.of("/chat");
 
 nsp.on("connection", function(socket) {
   console.log("socket connected");
-socket.on("getId",async (obj)=> {
-  let id = obj.id
+  socket.on("getId", async obj => {
+    let id = obj.id;
 
-  let count = await getCount(id);
-  nsp.emit(`/${id}`, {
-    id: id,
-    count: count
+    let count = await getCount(id);
+    nsp.emit(`/${id}`, {
+      id: id,
+      count: count
+    });
   });
-})
   soc = socket;
   require("./routes/socket").start(soc, nsp);
   require("./middleware/notification").start(soc, nsp);
@@ -48,7 +48,7 @@ mongoose.connect("mongodb://127.0.0.1:27017/mongodb", {
 mongoose.set("useFindAndModify", false);
 
 var app = express();
-app.use(cors())
+app.use(cors());
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
 app.engine("html", require("ejs").renderFile);
@@ -88,6 +88,5 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.send(err);
 });
-
 
 module.exports = app;
