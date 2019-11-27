@@ -166,7 +166,7 @@ router.post("/register", async function(req, res) {
         status: 200,
         message: "user registered successfully",
         response: {
-          token: update.token,
+          token: token,
           emailAddress: update.emailAddress,
           id: update._id
         }
