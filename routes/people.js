@@ -37,7 +37,7 @@ module.exports = function(soc, nsp) {
     let radius = 91.44;
 
     let startTime = moment().format("YYYY-MM-DD HH:mm:ss");
-console.log('starttime',startTime)
+    console.log("starttime", startTime);
     let response = await UserModel.find({
       location: {
         $nearSphere: {
@@ -52,7 +52,7 @@ console.log('starttime',startTime)
       updatedAt: { $lte: startTime }
     });
     if (response) {
-      console.log('resp',response)
+      console.log("resp", response);
       let modified_response = [];
       let alreadyFriend = false;
 

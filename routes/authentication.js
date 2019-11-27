@@ -101,16 +101,13 @@ router.post("/register", async function(req, res) {
 
   let result = await UserModel.findOne({ emailAddress: emailAddress });
   console.log(result);
-  if (result.profile.emailAddress == emailAddress) {
+  if (result && result.profile.emailAddress == emailAddress) {
     console.log("users already exists", result.emailAddress);
     res.json({
       status: 202,
       message: "users already exists"
     });
-  } else if (
-    !result.profile.emailAddress &&
-    result.emailAddress != emailAddress
-  ) {
+  } else if ( !result ) {
     var User = new UserModel({
       firstName: firstName,
       lastName: lastName,
@@ -164,7 +161,7 @@ router.post("/register", async function(req, res) {
     );
 
     if(update){
-      console.log("User saved successfully");
+      console.log("User updated successfully");
       res.json({
         status: 200,
         message: "user registered successfully",
