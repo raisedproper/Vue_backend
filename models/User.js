@@ -19,6 +19,7 @@ var userSchema = new mongoose.Schema({
     age: Number,
     phoneNumber: String,
     emailAddress: String,
+    username: String,
     address: String,
     profession: String,
     profilePicturePath: String,

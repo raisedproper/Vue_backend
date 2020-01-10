@@ -87,12 +87,12 @@ router.post("/login", function(req, res, next) {
 });
 
 router.post("/register", async function(req, res) {
-  let { firstName, lastName, password, emailAddress } = req.body;
+  let { firstName, lastName, password, emailAddress,username } = req.body;
   var fcmToken = req.headers["token"];
   firstName = toUpper(firstName);
   lastName = toUpper(lastName);
   emailAddress = toUpper(emailAddress);
-  console.log(firstName, lastName, emailAddress);
+  
 
   var salt = bcrypt.genSaltSync(saltRounds);
   var hash = bcrypt.hashSync(password, salt);
@@ -100,7 +100,7 @@ router.post("/register", async function(req, res) {
   var token = jwt.sign({ emailAddress: emailAddress }, config.Secret);
 
   let result = await UserModel.findOne({ emailAddress: emailAddress });
-  console.log(result);
+  
   if (result && result.profile.emailAddress == emailAddress) {
     console.log("users already exists", result.emailAddress);
     res.json({
@@ -108,10 +108,11 @@ router.post("/register", async function(req, res) {
       message: "users already exists"
     });
   } else if ( !result ) {
-    var User = new UserModel({
+    var User = new UserModel({ 
       firstName: firstName,
       lastName: lastName,
       emailAddress: emailAddress,
+      username: username,
       password: hash,
       status: "active",
       fcmToken: fcmToken,
@@ -151,6 +152,7 @@ router.post("/register", async function(req, res) {
           firstName: firstName,
           lastName: lastName,
           emailAddress: emailAddress,
+          username: username,
           password: hash,
           status: "active",
           fcmToken: fcmToken,

@@ -161,8 +161,8 @@ module.exports = function(socket, nsp) {
     emailAddress = toUpper(emailAddress);
     address = toUpper(address);
     gender = toUpper(gender);
-    var d = dob.split("/")[0];
-    var m = dob.split("/")[1];
+    var m = dob.split("/")[0];
+    var d = dob.split("/")[1];
     var y = dob.split("/")[2];
 
     dob = `${m}/${d}/${y}`;
