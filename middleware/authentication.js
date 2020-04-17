@@ -11,6 +11,7 @@ var routeAuthentication = function(req,res,next){
     UserModel.findOne({token: token}, function(err,resp){
         if(resp){
             console.log('found',resp.emailAddress)
+            next()
         } else if(!resp){
             console.log("token not authenticated");
             res.json({
@@ -18,6 +19,7 @@ var routeAuthentication = function(req,res,next){
               authorization: false,
               message: "Failed to authenticate token."
             });
+            return false;
         } else if(err){
             console.log("error while authenticating token");
             res.json({
@@ -25,9 +27,10 @@ var routeAuthentication = function(req,res,next){
               authorization: false,
               message: "Failed to authenticate token."
             });
+            return false;
         }
     })
-    next()
+    
 }
 
 module.exports = routeAuthentication

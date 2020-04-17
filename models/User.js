@@ -38,12 +38,26 @@ var userSchema = new mongoose.Schema({
       type: String,
       enum: ["Point"]
     }
-  }
+  },
+ addresses : [{
+                location: {
+                  coordinates: {
+                    type: [Number],
+                  },
+                  type: {
+                    type: String,
+                    enum: ["Point"]
+                  }
+                },
+                time: Date
+                }
+              ]
 });
 
 userSchema.plugin(mongoosePaginate);
 userSchema.hasMany("People");
 userSchema.index({ location: "2dsphere" });
+userSchema.index({ "addresses.location": "2dsphere" });
 var UserModel = mongoose.model("User", userSchema);
 
 module.exports = UserModel;

@@ -269,21 +269,26 @@ module.exports = function(socket, nsp) {
   });
 
   router.post("/addProfileLink", async function(req, res) {
+  //  console.log("res add Profile",res)
+      console.log("res add Profile",req.body)
     try {
       let emailAddress = req.body.emailAddress;
       var profileLink = req.body.profileLink;
-
+      let token = req.body.token;
       emailAddress = toUpper(emailAddress);
 
       let user = await UserModel.findOne({ emailAddress: emailAddress });
+      console.log(user);
       if (user.profile.emailAddress) {
-        console.log(user.profile.socialMediaAccount);
-        console.log(profileLink.link);
+        console.log('socialMediaAccount',user.profile.socialMediaAccount);
+        console.log('profileLink',profileLink.link);
         user.profile.socialMediaAccount[profileLink.id].username =
           profileLink.username;
         user.profile.socialMediaAccount[profileLink.id].link = profileLink.link;
         user.profile.socialMediaAccount[profileLink.id].linked =
           profileLink.linked;
+        user.profile.socialMediaAccount[profileLink.id].token =
+          profileLink.token;
 
         user.profile.updatedAt = new Date();
 
@@ -317,8 +322,8 @@ module.exports = function(socket, nsp) {
             message: "Profile link not added "
           });
         }
-      } else if (!resp.profile.emailAddress) {
-        console.log("This profile doesnot exists");
+      } else if (!user.profile.emailAddress) {
+        console.log("This profile doesnot exists",user.profile);
         return res.json({
           status: 400,
           authorization: false,
@@ -338,10 +343,11 @@ module.exports = function(socket, nsp) {
     try {
       var token = req.headers["token"];
       let user = await UserModel.findOne({ token: token });
-      console.log("user found", user);
-
+      console.log("user data found", user);
+       console.log("user.profile.emailAddress",user.profile.emailAddress)
       if (user) {
-        if (user.profile.emailAddress) {
+        console.log("user.profile.emailAddress",user.profile.emailAddress)
+        if (user.emailAddress) {
           let profileDetails = {
             id: user._id,
             firstName: user.firstName,
@@ -423,6 +429,7 @@ module.exports = function(socket, nsp) {
             gender: resp.profile.gender,
             socialMediaAccount: newSocialMedia,
             publicAccount: resp.profile.publicAccount,
+            isFriend: resp.profile.publicAccount,
             createdAt: resp.profile.createdAt,
             updatedAt: resp.profile.updatedAt
           };
@@ -573,5 +580,8 @@ module.exports = function(socket, nsp) {
       });
     }
   });
+
+
+    
   return router;
 };
