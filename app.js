@@ -37,6 +37,8 @@ var conversationRouter = require("./routes/Conversation");
 var followRouter = require("./routes/follow");
 var activityRouter = require("./routes/activity");
 var indexRouter = require("./routes/index");
+var userlocationRouter = require("./routes/userLocation");
+
 
 //admin
 var adminAuthenticationRouter = require("./routes/admin/authentication");
@@ -68,6 +70,9 @@ app.use("/profile", profileRouter(soc, nsp));
 app.use("/conversation", conversationRouter(soc, nsp));
 app.use("/follow", followRouter(soc, nsp));
 app.use("/activity", activityRouter(soc, nsp));
+
+app.use("/userlocation", userlocationRouter(soc, nsp));
+
 
 //admin routes
 app.use("/admin", adminAuthenticationRouter);

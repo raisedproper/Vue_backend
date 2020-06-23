@@ -12,6 +12,8 @@ router.post("/login", function(req, res, next) {
   emailAddress = toUpper(emailAddress);
   var fcmToken = req.headers["token"];
 
+console.log('login hit'+req.body);
+
   UserModel.find({ emailAddress: emailAddress }, function(err, user) {
     if (
       user.length == 1 &&

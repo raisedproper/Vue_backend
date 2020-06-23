@@ -30,6 +30,7 @@ var userSchema = new mongoose.Schema({
     updatedAt: Date
   },
 
+  userLocation:[],
   location: {
     coordinates: {
       type: [Number],

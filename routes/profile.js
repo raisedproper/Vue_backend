@@ -14,17 +14,21 @@ var schedule = require("node-schedule");
 
 var storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "public/images");
+    cb(null, "./public/images/");
   },
   filename: (req, file, cb) => {
     cb(
       null,
-      file.fieldname + "-" + Date.now() + path.extname(file.originalname)
+      file.fieldname + "-" + Date.now() + path.extname(file.originalname),
+      
     );
+    console.log('file name name '+JSON.stringify(file));
   }
 });
 
 var upload = multer({ storage: storage });
+// var upload = multer({dest:'public/images/'});
+
 
 router.use(routeAuthentication);
 
@@ -106,6 +110,11 @@ module.exports = function(socket, nsp) {
     req,
     res
   ) {
+
+console.log('profilePicture Image'+req);
+console.log('profilePicture Image'+res);
+
+
     try {
       var token = req.headers["token"];
       var profilePicture = req.file ? req.file.filename : "";
@@ -573,5 +582,82 @@ module.exports = function(socket, nsp) {
       });
     }
   });
+
+
+
+
+  /////  Added By Ajeet
+
+
+  router.post("/createUserLocation", async function(req, res) {
+    var {
+      latitude,
+      longitude,
+      emailAddress,
+    } = req.body;
+    
+    emailAddress = toUpper(emailAddress);
+   
+    console.log('createUserLocation Res',JSON.stringify(emailAddress));
+
+    UserModel.findOne({ emailAddress: emailAddress }, function(err, resp) {
+      if (resp) {
+
+
+    // console.log('createUserLocation Res',JSON.stringify(resp));
+    console.log('createUserLocation Res',JSON.stringify(resp.userLocation));
+
+    
+
+        if (typeof resp.profile.emailAddress == "undefined") {
+        
+         console.log('response.log');
+         
+        } else if (resp.profile.emailAddress == emailAddress) {
+
+          // UserModel.createIndex( { userLocation : {'emailAddress':emailAddress,'latitude':"12333",'longitude':"1233333"} } )
+          let update =  UserModel.findOneAndUpdate(
+            { emailAddress: emailAddress },
+            {
+              $set: {
+                "userLocation": {'emailAddress':emailAddress,'latitude':"12333",'longitude':"1233333"},
+               
+              }
+            },
+            { new: true }
+          );
+
+          console.log("Profile with this user already exists"+JSON.stringify(update));
+          // return res.json({
+          //   status: 202,
+          //   message: "Profile with this user already exists",
+          //   emailAddress: resp.emailAddress
+          // });
+        }
+      } else if (err) {
+        console.log("error while finding user", err);
+        // return res.json({
+        //   status: 400,
+        //   message: "User couldn't be found",
+        //   emailAddress: resp.emailAddress
+        // });
+      } else if (!resp) {
+        console.log("This email Address doesn't exists");
+        // return res.json({
+        //   status: 400,
+        //   authorization: false,
+        //   message: "This email Address doesn't exists"
+        // });
+      }
+    });
+  });
+
+
+
+
+
   return router;
+
+
+
 };
